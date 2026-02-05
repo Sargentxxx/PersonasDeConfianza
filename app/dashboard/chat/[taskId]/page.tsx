@@ -18,12 +18,11 @@ import {
 } from "firebase/firestore";
 import { storage } from "@/lib/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { use } from "react";
 
-export function generateStaticParams() {
-  return [];
+export async function generateStaticParams() {
+  return [{ taskId: "placeholder" }];
 }
-
-export const dynamic = "force-static";
 
 interface Message {
   id: string;
@@ -41,9 +40,12 @@ interface RequestData {
   repName: string;
 }
 
-export default function ChatPage() {
-  const params = useParams();
-  const taskId = params.taskId as string;
+export default function ChatPage({
+  params,
+}: {
+  params: Promise<{ taskId: string }>;
+}) {
+  const { taskId } = use(params);
   const { user } = useAuth();
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
