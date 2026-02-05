@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { db } from "@/lib/firebase";
 import {
@@ -19,10 +18,6 @@ import {
 import { storage } from "@/lib/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { use } from "react";
-
-export async function generateStaticParams() {
-  return [{ taskId: "placeholder" }];
-}
 
 interface Message {
   id: string;
