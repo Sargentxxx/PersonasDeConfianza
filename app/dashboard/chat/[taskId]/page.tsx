@@ -19,6 +19,12 @@ import {
 import { storage } from "@/lib/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
+export function generateStaticParams() {
+  return [];
+}
+
+export const dynamic = "force-static";
+
 interface Message {
   id: string;
   text?: string;
