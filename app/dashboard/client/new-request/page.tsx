@@ -33,18 +33,35 @@ export default function NewRequestPage() {
     let lng = null;
 
     try {
+      console.log("Geocodificando dirección:", address, city);
       // 1. Geocode the address using Nominatim (OpenStreetMap)
       const query = `${address}, ${city}`;
-      const response = await fetch(
+      let response = await fetch(
         `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
           query,
         )}&format=json&limit=1`,
       );
-      const data = await response.json();
+      let data = await response.json();
+
+      if (!data || data.length === 0) {
+        console.warn(
+          "Dirección exacta no encontrada, intentando solo ciudad...",
+        );
+        // Fallback: Try just the city
+        response = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+            city,
+          )}&format=json&limit=1`,
+        );
+        data = await response.json();
+      }
 
       if (data && data.length > 0) {
         lat = parseFloat(data[0].lat);
         lng = parseFloat(data[0].lon);
+        console.log("Coordenadas encontradas:", lat, lng);
+      } else {
+        console.warn("No se encontraron coordenadas para esta ubicación.");
       }
     } catch (error) {
       console.error("Error geocoding address:", error);
@@ -52,6 +69,17 @@ export default function NewRequestPage() {
     }
 
     try {
+      if (!lat || !lng) {
+        if (
+          !confirm(
+            "No pudimos localizar la dirección exacta en el mapa. ¿Deseas publicar la solicitud de todos modos (sin pin en el mapa)?",
+          )
+        ) {
+          setIsLoading(false);
+          return;
+        }
+      }
+
       // 2. Add request to Firestore
       await addDoc(collection(db, "requests"), {
         clientId: user.uid,
@@ -74,6 +102,7 @@ export default function NewRequestPage() {
       });
 
       // Redirect back to dashboard
+      console.log("Solicitud creada exitosamente");
       router.push("/dashboard/client");
     } catch (error) {
       console.error("Error creating request:", error);

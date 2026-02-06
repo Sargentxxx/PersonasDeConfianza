@@ -55,9 +55,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           "Acceso protegido sin sesión, esperando brevemente antes de redirigir...",
         );
         const timer = setTimeout(() => {
-          // Re-chequeamos después de 500ms para evitar falsos positivos durante la navegación
+          // Re-chequeamos después de 2000ms para evitar falsos positivos durante la navegación
+          // Esto es crucial para GitHub Pages donde el estado de auth puede tardar un poco
           router.push("/auth");
-        }, 500);
+        }, 2000);
         return () => clearTimeout(timer);
       }
     }
