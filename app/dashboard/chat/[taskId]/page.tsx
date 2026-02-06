@@ -45,6 +45,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -80,18 +81,7 @@ export default function ChatPage() {
             console.warn(
               "Acceso denegado: El usuario no es ni el cliente ni el rep de esta tarea.",
             );
-
-            // Obtener rol para redirigir al dashboard correcto
-            const userDoc = await getDoc(doc(db, "users", user.uid));
-            const role = userDoc.exists() ? userDoc.data()?.role : "client";
-
-            console.log(
-              "Redirigiendo a:",
-              role === "rep" ? "/dashboard/rep" : "/dashboard/client",
-            );
-            router.push(
-              role === "rep" ? "/dashboard/rep" : "/dashboard/client",
-            );
+            setAccessDenied(true); // Mostrar pantalla de error en lugar de redirigir
             return;
           }
           setTaskData(data);
@@ -175,6 +165,43 @@ export default function ChatPage() {
       setUploading(false);
     }
   };
+
+  if (accessDenied) {
+    return (
+      <div className="flex flex-col h-screen items-center justify-center bg-slate-50 dark:bg-slate-900 p-4 text-center">
+        <span className="material-symbols-outlined text-6xl text-red-500 mb-4">
+          gpp_maybe
+        </span>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+          Acceso Denegado al Chat
+        </h1>
+        <p className="text-slate-600 dark:text-slate-400 mb-6 max-w-md">
+          No tienes permiso para ver esta conversación. Esto puede suceder si no
+          eres parte de la tarea o si hubo un error en la carga.
+        </p>
+
+        {/* Debug Info visible only to help diagnosis */}
+        <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg text-left text-xs font-mono mb-6 max-w-sm w-full overflow-auto">
+          <p className="font-bold mb-2 text-red-400">Detalles de Depuración:</p>
+          <p>Tu ID (User): {user?.uid}</p>
+          <p>ID Cliente Tarea: {taskData?.clientId || "Cargando..."}</p>
+          <p>ID Rep Tarea: {taskData?.repId || "Sin asignar"}</p>
+          <p>ID Tarea: {taskId}</p>
+        </div>
+
+        <button
+          onClick={() =>
+            router.push(
+              user?.role === "rep" ? "/dashboard/rep" : "/dashboard/client",
+            )
+          }
+          className="bg-primary text-white px-6 py-2 rounded-xl font-medium hover:bg-primary-dark transition"
+        >
+          Volver al Panel
+        </button>
+      </div>
+    );
+  }
 
   if ((loading || authLoading) && !taskData) {
     return (
