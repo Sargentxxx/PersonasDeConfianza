@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 import MobileHeader from "@/components/MobileHeader";
 import { useAuth } from "@/components/AuthProvider";
 import { db, auth } from "@/lib/firebase";
@@ -13,6 +13,9 @@ import {
   orderBy,
   onSnapshot,
   Timestamp,
+  doc,
+  updateDoc,
+  serverTimestamp,
 } from "firebase/firestore";
 
 interface Request {
@@ -32,6 +35,12 @@ export default function ClientDashboard() {
   const { user } = useAuth();
   const [requests, setRequests] = useState<Request[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Rating Modal State
+  const [ratingTask, setRatingTask] = useState<Request | null>(null);
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -54,6 +63,35 @@ export default function ClientDashboard() {
     return () => unsubscribe();
   }, [user]);
 
+  const handleConfirmCompletion = async () => {
+    if (!ratingTask) return;
+    setSubmitting(true);
+
+    try {
+      const taskRef = doc(db, "requests", ratingTask.id);
+
+      // 1. Update task status to closed
+      await updateDoc(taskRef, {
+        status: "closed",
+        rating: rating,
+        ratingComment: comment,
+        closedAt: serverTimestamp(),
+      });
+
+      // 2. Ideally, we would also update the Rep's profile with this rating here
+
+      setRatingTask(null);
+      setComment("");
+      setRating(5);
+      alert("¡Gracias! Tu trámite ha sido cerrado correctamente.");
+    } catch (error) {
+      console.error("Error closing task:", error);
+      alert("Hubo un error al guardar tu calificación.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "pending":
@@ -63,6 +101,8 @@ export default function ClientDashboard() {
       case "in_progress":
         return "text-green-500";
       case "completed":
+        return "text-purple-600"; // Distinct color for ready-to-close
+      case "closed":
         return "text-slate-500";
       default:
         return "text-slate-500";
@@ -78,7 +118,9 @@ export default function ClientDashboard() {
       case "in_progress":
         return "En Progreso";
       case "completed":
-        return "Completado";
+        return "Finalizado (Confirmar)";
+      case "closed":
+        return "Cerrado";
       default:
         return "Desconocido";
     }
@@ -98,10 +140,10 @@ export default function ClientDashboard() {
   };
 
   const activeRequestsCount = requests.filter(
-    (r) => r.status !== "completed" && r.status !== "cancelled",
+    (r) => r.status !== "closed" && r.status !== "cancelled",
   ).length;
   const completedRequestsCount = requests.filter(
-    (r) => r.status === "completed",
+    (r) => r.status === "closed",
   ).length;
 
   return (
@@ -246,7 +288,7 @@ export default function ClientDashboard() {
             {/* Active Tasks List */}
             <section>
               <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6">
-                En Curso
+                Todas las Solicitudes
               </h2>
 
               {loading ? (
@@ -312,14 +354,17 @@ export default function ClientDashboard() {
                               className={`font-medium text-sm flex items-center gap-1 ${getStatusColor(req.status)}`}
                             >
                               <span
-                                className={`w-2 h-2 rounded-full ${req.status === "pending" ? "bg-orange-500 animate-pulse" : "bg-current"}`}
+                                className={`w-2 h-2 rounded-full ${req.status === "pending" || req.status === "assigned" ? "bg-current animate-pulse" : "bg-current"}`}
                               ></span>
                               {getStatusLabel(req.status)}
                             </span>
                           </div>
+
                           <div className="flex gap-2 w-full sm:w-auto">
-                            {(req.status === "assigned" ||
-                              req.status === "in_progress") && (
+                            {/* Chat Button (Only if Assigned/In Progress/Completed) */}
+                            {["assigned", "in_progress", "completed"].includes(
+                              req.status,
+                            ) && (
                               <Link
                                 href={`/dashboard/chat?id=${req.id}`}
                                 className="flex-1 sm:flex-none px-5 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark transition-colors flex items-center justify-center gap-2"
@@ -330,9 +375,23 @@ export default function ClientDashboard() {
                                 Chat
                               </Link>
                             )}
-                            <button className="flex-1 sm:flex-none px-5 py-2.5 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-white rounded-lg font-medium hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors">
-                              Ver Detalles
-                            </button>
+
+                            {/* Confirm Completion Button */}
+                            {req.status === "completed" ? (
+                              <button
+                                onClick={() => setRatingTask(req)}
+                                className="flex-1 sm:flex-none px-5 py-2.5 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-green-500/20"
+                              >
+                                <span className="material-symbols-outlined text-[20px]">
+                                  verified
+                                </span>
+                                Confirmar
+                              </button>
+                            ) : (
+                              <button className="flex-1 sm:flex-none px-5 py-2.5 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-white rounded-lg font-medium hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors">
+                                Ver Detalles
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -344,6 +403,73 @@ export default function ClientDashboard() {
           </div>
         </main>
       </div>
+
+      {/* Rating Modal */}
+      {ratingTask && (
+        <div
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          onClick={() => setRatingTask(null)}
+        >
+          <div
+            className="bg-white dark:bg-[#1a2632] rounded-2xl p-6 w-full max-w-md shadow-xl animate-scale-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="material-symbols-outlined text-3xl">
+                  check_circle
+                </span>
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
+                ¡Trabajo Finalizado!
+              </h3>
+              <p className="text-slate-500 mt-2">
+                Por favor confirma que se realizó el trabajo y califica al
+                representante.
+              </p>
+            </div>
+
+            <div className="flex justify-center gap-2 mb-6">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  onClick={() => setRating(star)}
+                  className="text-4xl transition-transform hover:scale-110 focus:outline-none"
+                >
+                  <span
+                    className={`material-symbols-outlined ${star <= rating ? "text-yellow-400 fill-current" : "text-slate-300"}`}
+                  >
+                    {star <= rating ? "star" : "star"}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            <textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder="Escribe un comentario o reseña (opcional)..."
+              className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-4 mb-6 focus:ring-2 focus:ring-primary min-h-[100px]"
+            />
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setRatingTask(null)}
+                className="flex-1 py-3 text-slate-500 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmCompletion}
+                disabled={submitting}
+                className="flex-1 py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary-dark transition-colors shadow-lg shadow-blue-500/20 disabled:opacity-70"
+              >
+                {submitting ? "Enviando..." : "Confirmar y Cerrar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
