@@ -100,6 +100,9 @@ export default function AuthPage() {
     setError(null);
     try {
       const provider = new GoogleAuthProvider();
+      // Forzar que Google pida cuenta si hay varias
+      provider.setCustomParameters({ prompt: "select_account" });
+
       const result = await signInWithPopup(auth, provider);
 
       // Check if user exists in Firestore
@@ -109,10 +112,16 @@ export default function AuthPage() {
       let userRole = role;
 
       if (!userDoc.exists()) {
+        console.log(
+          "Creando nuevo usuario con Google:",
+          result.user.email,
+          "Rol:",
+          role,
+        );
         // Create new user doc if it doesn't exist
         await setDoc(userDocRef, {
           uid: result.user.uid,
-          name: result.user.displayName,
+          name: result.user.displayName || "Usuario Google",
           email: result.user.email,
           phone: result.user.phoneNumber || "",
           role: role, // Use currently selected role
@@ -123,15 +132,23 @@ export default function AuthPage() {
         userRole = userDoc.data().role;
       }
 
+      console.log("Login Google exitoso. Redirigiendo a:", userRole);
       if (userRole === "client") router.push("/dashboard/client");
-      else router.push("/dashboard/rep");
+      else if (userRole === "rep") router.push("/dashboard/rep");
+      else router.push("/");
     } catch (err: any) {
-      console.error(err);
+      console.error("Error completo de Google Login:", err);
       if (err.code === "auth/popup-closed-by-user") {
         setIsLoading(false);
         return;
       }
-      setError(getErrorMessage(err));
+      if (err.code === "auth/unauthorized-domain") {
+        setError(
+          "Este dominio no está autorizado en Firebase. Por favor, añade 'sargentxxx.github.io' en la consola de Firebase.",
+        );
+      } else {
+        setError(getErrorMessage(err));
+      }
     } finally {
       setIsLoading(false);
     }

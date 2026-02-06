@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { db } from "@/lib/firebase";
 import {
@@ -17,7 +17,6 @@ import {
 } from "firebase/firestore";
 import { storage } from "@/lib/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { use } from "react";
 
 interface Message {
   id: string;
@@ -35,12 +34,9 @@ interface RequestData {
   repName: string;
 }
 
-export default function ChatPage({
-  params,
-}: {
-  params: Promise<{ taskId: string }>;
-}) {
-  const { taskId } = use(params);
+export default function ChatPage() {
+  const params = useParams();
+  const taskId = params?.taskId as string;
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -54,25 +50,45 @@ export default function ChatPage({
 
   // 1. Load Task Details to verify access & show title
   useEffect(() => {
-    // Wait for auth to be ready
-    if (!user || !taskId) return;
+    // Si no hay usuario o el taskId es el placeholder de compilación, no hacemos nada
+    if (!user || !taskId || taskId === "placeholder") return;
 
     const fetchTask = async () => {
       try {
+        console.log(
+          "Intentando cargar chat:",
+          taskId,
+          "para usuario:",
+          user.uid,
+        );
         const docRef = doc(db, "requests", taskId);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
           const data = docSnap.data() as RequestData;
+          console.log("Datos de la tarea encontrados:", {
+            clientId: data.clientId,
+            repId: data.repId,
+            currentUserId: user.uid,
+          });
 
-          // Improved Security Check: User must be Client OR Rep of this task
-          if (user.uid !== data.clientId && user.uid !== data.repId) {
-            console.warn("Access denied: UID not in request", user.uid, data);
+          // Verificación de seguridad mejorada
+          const isClient = user.uid === data.clientId;
+          const isRep = user.uid === data.repId;
 
-            // Fetch user role to redirect back to the correct dashboard
+          if (!isClient && !isRep) {
+            console.warn(
+              "Acceso denegado: El usuario no es ni el cliente ni el rep de esta tarea.",
+            );
+
+            // Obtener rol para redirigir al dashboard correcto
             const userDoc = await getDoc(doc(db, "users", user.uid));
             const role = userDoc.exists() ? userDoc.data()?.role : "client";
 
+            console.log(
+              "Redirigiendo a:",
+              role === "rep" ? "/dashboard/rep" : "/dashboard/client",
+            );
             router.push(
               role === "rep" ? "/dashboard/rep" : "/dashboard/client",
             );
@@ -80,10 +96,10 @@ export default function ChatPage({
           }
           setTaskData(data);
         } else {
-          console.error("Task not found");
+          console.error("La tarea no existe en base de datos:", taskId);
         }
       } catch (err) {
-        console.error("Error fetching task:", err);
+        console.error("Error al cargar la tarea:", err);
       } finally {
         setLoading(false);
       }

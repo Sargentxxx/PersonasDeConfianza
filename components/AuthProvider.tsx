@@ -33,11 +33,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    // Prevent redirecting while auth state is being determined
+    // No hacer nada mientras está cargando el estado inicial
     if (loading) return;
 
     if (!user) {
-      // List of roots that require authentication
       const protectedPrefixes = [
         "/dashboard",
         "/admin",
@@ -45,8 +44,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         "/settings",
       ];
 
-      // usePathname() in Next.js already handles basePath (it doesn't include it)
-      // but let's be extra safe and check for both relative and potentially full paths
       const isProtected = protectedPrefixes.some(
         (prefix) =>
           pathname.startsWith(prefix) ||
@@ -55,10 +52,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (isProtected) {
         console.log(
-          "Protected route accessed without user, redirecting to /auth",
-          pathname,
+          "Acceso protegido sin sesión, esperando brevemente antes de redirigir...",
         );
-        router.push("/auth");
+        const timer = setTimeout(() => {
+          // Re-chequeamos después de 500ms para evitar falsos positivos durante la navegación
+          router.push("/auth");
+        }, 500);
+        return () => clearTimeout(timer);
       }
     }
   }, [user, loading, pathname, router]);
