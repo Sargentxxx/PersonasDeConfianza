@@ -1,15 +1,191 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useAuth } from "@/components/AuthProvider";
+import { db } from "@/lib/firebase";
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+  getDocs,
+  addDoc,
+  serverTimestamp,
+  Timestamp,
+  or,
+  limit,
+} from "firebase/firestore";
+import { storage } from "@/lib/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+
+interface Message {
+  id: string;
+  text?: string;
+  imageUrl?: string;
+  senderId: string;
+  createdAt: Timestamp;
+}
+
+interface Conversation {
+  id: string;
+  title: string;
+  clientId: string;
+  repId: string;
+  clientName: string;
+  repName: string;
+  lastMessage?: {
+    text?: string;
+    imageUrl?: string;
+    createdAt?: Timestamp;
+  };
+}
 
 export default function MessagesPage() {
-  const [activeChat, setActiveChat] = useState("chat1");
+  const { user } = useAuth();
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [activeChat, setActiveChat] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [newMessage, setNewMessage] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // 1. Load all conversations where the user is involved
+  useEffect(() => {
+    if (!user) return;
+
+    const q = query(
+      collection(db, "requests"),
+      or(where("clientId", "==", user.uid), where("repId", "==", user.uid)),
+      orderBy("createdAt", "desc"),
+    );
+
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      const convs: Conversation[] = [];
+
+      for (const doc of snapshot.docs) {
+        const data = doc.data();
+
+        // Get the last message for this conversation
+        const messagesQuery = query(
+          collection(db, "requests", doc.id, "messages"),
+          orderBy("createdAt", "desc"),
+          limit(1),
+        );
+
+        const messagesSnapshot = await getDocs(messagesQuery);
+        const lastMsg = messagesSnapshot.docs[0]?.data();
+
+        convs.push({
+          id: doc.id,
+          title: data.title,
+          clientId: data.clientId,
+          repId: data.repId,
+          clientName: data.clientName,
+          repName: data.repName || "Representante",
+          lastMessage: lastMsg
+            ? {
+                text: lastMsg.text,
+                imageUrl: lastMsg.imageUrl,
+                createdAt: lastMsg.createdAt,
+              }
+            : undefined,
+        });
+      }
+
+      setConversations(convs);
+      setLoading(false);
+
+      // Auto-select first conversation if none selected
+      if (!activeChat && convs.length > 0) {
+        setActiveChat(convs[0].id);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [user, activeChat]);
+
+  // 2. Load messages for active conversation
+  useEffect(() => {
+    if (!activeChat) return;
+
+    const q = query(
+      collection(db, "requests", activeChat, "messages"),
+      orderBy("createdAt", "asc"),
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const msgs = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Message[];
+      setMessages(msgs);
+
+      // Auto-scroll to bottom
+      setTimeout(() => {
+        scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    });
+
+    return () => unsubscribe();
+  }, [activeChat]);
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !user || !activeChat) return;
+
+    try {
+      await addDoc(collection(db, "requests", activeChat, "messages"), {
+        text: newMessage,
+        senderId: user.uid,
+        createdAt: serverTimestamp(),
+      });
+      setNewMessage("");
+    } catch (error) {
+      console.error("Error sending message:", error);
+      alert("Error al enviar mensaje.");
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user || !activeChat) return;
+
+    setUploading(true);
+    try {
+      const storageRef = ref(
+        storage,
+        `chat_images/${activeChat}/${Date.now()}_${file.name}`,
+      );
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+
+      await addDoc(collection(db, "requests", activeChat, "messages"), {
+        imageUrl: url,
+        senderId: user.uid,
+        createdAt: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      alert("Error al subir imagen.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const activeConversation = conversations.find((c) => c.id === activeChat);
+  const otherPersonName =
+    user?.uid === activeConversation?.clientId
+      ? activeConversation?.repName
+      : activeConversation?.clientName;
 
   return (
     <div className="bg-background-light dark:bg-background-dark min-h-screen font-sans text-slate-800 dark:text-slate-200">
-      {/* Navbar Content (Simplified) */}
+      {/* Navbar */}
       <nav className="bg-white dark:bg-[#1a2632] border-b border-slate-200 dark:border-slate-700 h-16 flex items-center justify-between px-4 lg:px-8">
         <Link
           href="/dashboard/client"
@@ -21,16 +197,18 @@ export default function MessagesPage() {
           </span>
         </Link>
         <div className="font-bold text-lg">Mensajes</div>
-        <div className="w-8"></div> {/* Spacer */}
+        <div className="w-8"></div>
       </nav>
 
       <div className="flex h-[calc(100vh-64px)] overflow-hidden">
         {/* Chat List Sidebar */}
         <div
-          className={`w-full md:w-80 lg:w-96 bg-white dark:bg-[#1a2632] border-r border-slate-200 dark:border-slate-700 flex flex-col ${mobileMenuOpen ? "block fixed inset-0 z-50" : "hidden md:flex"}`}
+          className={`w-full md:w-80 lg:w-96 bg-white dark:bg-[#1a2632] border-r border-slate-200 dark:border-slate-700 flex flex-col ${
+            mobileMenuOpen ? "block fixed inset-0 z-50" : "hidden md:flex"
+          }`}
         >
           <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
-            <h2 className="font-bold text-lg">Chats</h2>
+            <h2 className="font-bold text-lg">Conversaciones</h2>
             <button
               onClick={() => setMobileMenuOpen(false)}
               className="md:hidden p-2 text-slate-500 hover:bg-slate-100 rounded-full"
@@ -38,243 +216,235 @@ export default function MessagesPage() {
               <span className="material-symbols-outlined">close</span>
             </button>
           </div>
-          <div className="p-4">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Buscar mensaje..."
-                className="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary"
-              />
-              <span className="material-symbols-outlined absolute left-3 top-2.5 text-slate-400 text-lg">
-                search
-              </span>
-            </div>
-          </div>
 
           <div className="flex-1 overflow-y-auto">
-            <div
-              onClick={() => {
-                setActiveChat("chat1");
-                setMobileMenuOpen(false);
-              }}
-              className={`p-4 border-b border-slate-100 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${activeChat === "chat1" ? "bg-blue-50 dark:bg-blue-900/10 border-l-4 border-l-primary" : ""}`}
-            >
-              <div className="flex gap-3">
-                <div className="relative">
-                  <img
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuAIlpSyjW0VtGa3WuNey-gR2qsXObLjrbfTyEVWcIp2l8btBMT-xG79trnfMdlnqPuYUHzA9Qw9Nuc2HveLmR3_oQzezjbnzZ8_3sywpZeELpL4bjONmZJT4-_ewcCLEdT2vzz3yNLSZ2Ak9khN-QUPskONx5Yh1iITrOBI9eg_y8_BaLpY0UI7aQ1vYlD8K7_A4OGzr7dlscT-OUzDVTrs53oqwfTAeAU3vqUXe6GbZ2njy3sv6T7WcaU2LYK6xt2oyqYu3NYDDg"
-                    className="w-12 h-12 rounded-full object-cover"
-                    alt="User"
-                  />
-                  <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-[#1a2632]"></div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-baseline mb-1">
-                    <h3 className="font-semibold text-sm truncate text-slate-900 dark:text-white">
-                      Juan Martinez
-                    </h3>
-                    <span className="text-xs text-slate-500">10:45 AM</span>
-                  </div>
-                  <p className="text-xs text-slate-600 dark:text-slate-400 truncate">
-                    Sisi, ya llegue a la concesionaria. Ahora te paso las fotos
-                    del motor.
-                  </p>
-                  <div className="mt-2 flex gap-1">
-                    <span className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 px-2 py-0.5 rounded text-[10px] font-bold uppercase">
-                      Verificación #NB-8821
-                    </span>
-                  </div>
-                </div>
+            {loading ? (
+              <div className="flex justify-center p-10">
+                <span className="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></span>
               </div>
-            </div>
-
-            <div
-              onClick={() => {
-                setActiveChat("chat2");
-                setMobileMenuOpen(false);
-              }}
-              className={`p-4 border-b border-slate-100 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${activeChat === "chat2" ? "bg-blue-50 dark:bg-blue-900/10 border-l-4 border-l-primary" : ""}`}
-            >
-              <div className="flex gap-3">
-                <div className="relative">
-                  <div className="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 font-bold">
-                    SP
-                  </div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-baseline mb-1">
-                    <h3 className="font-semibold text-sm truncate text-slate-900 dark:text-white">
-                      Soporte Plataforma
-                    </h3>
-                    <span className="text-xs text-slate-500">Ayer</span>
-                  </div>
-                  <p className="text-xs text-slate-600 dark:text-slate-400 truncate">
-                    El pago ha sido liberado correctamente.
-                  </p>
-                </div>
+            ) : conversations.length === 0 ? (
+              <div className="text-center p-10 text-slate-500">
+                <span className="material-symbols-outlined text-4xl mb-2 block">
+                  inbox
+                </span>
+                <p className="text-sm">No tienes conversaciones activas</p>
               </div>
-            </div>
+            ) : (
+              conversations.map((conv) => (
+                <div
+                  key={conv.id}
+                  onClick={() => {
+                    setActiveChat(conv.id);
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`p-4 border-b border-slate-100 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${
+                    activeChat === conv.id
+                      ? "bg-blue-50 dark:bg-blue-900/10 border-l-4 border-l-primary"
+                      : ""
+                  }`}
+                >
+                  <div className="flex gap-3">
+                    <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 font-bold">
+                      {(user?.uid === conv.clientId
+                        ? conv.repName
+                        : conv.clientName
+                      )
+                        .charAt(0)
+                        .toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-baseline mb-1">
+                        <h3 className="font-semibold text-sm truncate text-slate-900 dark:text-white">
+                          {user?.uid === conv.clientId
+                            ? conv.repName
+                            : conv.clientName}
+                        </h3>
+                        {conv.lastMessage?.createdAt && (
+                          <span className="text-xs text-slate-500">
+                            {conv.lastMessage.createdAt
+                              .toDate()
+                              .toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 truncate">
+                        {conv.lastMessage?.text ||
+                          (conv.lastMessage?.imageUrl
+                            ? "📷 Imagen"
+                            : "Nueva conversación")}
+                      </p>
+                      <div className="mt-2 flex gap-1">
+                        <span className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 px-2 py-0.5 rounded text-[10px] font-bold uppercase truncate">
+                          {conv.title}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
         {/* Chat Area */}
         <div className="flex-1 flex flex-col bg-slate-50 dark:bg-background-dark">
-          {/* Chat Header */}
-          <div className="h-16 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a2632] flex items-center justify-between px-4">
-            <div className="flex items-center gap-3">
-              <button
-                className="md:hidden p-2 -ml-2 text-slate-600"
-                onClick={() => setMobileMenuOpen(true)}
-              >
-                <span className="material-symbols-outlined">menu</span>
-              </button>
-              <div className="relative">
-                <img
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuAIlpSyjW0VtGa3WuNey-gR2qsXObLjrbfTyEVWcIp2l8btBMT-xG79trnfMdlnqPuYUHzA9Qw9Nuc2HveLmR3_oQzezjbnzZ8_3sywpZeELpL4bjONmZJT4-_ewcCLEdT2vzz3yNLSZ2Ak9khN-QUPskONx5Yh1iITrOBI9eg_y8_BaLpY0UI7aQ1vYlD8K7_A4OGzr7dlscT-OUzDVTrs53oqwfTAeAU3vqUXe6GbZ2njy3sv6T7WcaU2LYK6xt2oyqYu3NYDDg"
-                  className="w-10 h-10 rounded-full object-cover"
-                  alt="Current User"
-                />
-                <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white dark:border-[#1a2632]"></div>
-              </div>
-              <div>
-                <h3 className="font-bold text-sm text-slate-900 dark:text-white">
-                  Juan Martinez
-                </h3>
-                <p className="text-xs text-green-600 dark:text-green-400 font-medium">
-                  En línea
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 text-slate-400">
-              <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors">
-                <span className="material-symbols-outlined">phone</span>
-              </button>
-              <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors">
-                <span className="material-symbols-outlined">videocam</span>
-              </button>
-              <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors">
-                <span className="material-symbols-outlined">info</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            <div className="flex justify-center my-4">
-              <span className="bg-slate-100 dark:bg-slate-800 text-slate-500 text-[10px] px-3 py-1 rounded-full uppercase font-bold tracking-wider">
-                Hoy, 2 de Octubre
-              </span>
-            </div>
-
-            <div className="flex gap-3 max-w-[85%]">
-              <img
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAIlpSyjW0VtGa3WuNey-gR2qsXObLjrbfTyEVWcIp2l8btBMT-xG79trnfMdlnqPuYUHzA9Qw9Nuc2HveLmR3_oQzezjbnzZ8_3sywpZeELpL4bjONmZJT4-_ewcCLEdT2vzz3yNLSZ2Ak9khN-QUPskONx5Yh1iITrOBI9eg_y8_BaLpY0UI7aQ1vYlD8K7_A4OGzr7dlscT-OUzDVTrs53oqwfTAeAU3vqUXe6GbZ2njy3sv6T7WcaU2LYK6xt2oyqYu3NYDDg"
-                className="w-8 h-8 rounded-full object-cover mt-1"
-                alt="Other User"
-              />
-              <div>
-                <div className="bg-white dark:bg-[#1a2632] border border-slate-200 dark:border-slate-700 p-3 rounded-2xl rounded-tl-none shadow-sm">
-                  <p className="text-sm text-slate-700 dark:text-slate-300">
-                    Hola Carlos! Ya estoy en camino a la concesionaria Ford.
-                    Llego en 10 minutos aprox.
-                  </p>
-                </div>
-                <span className="text-[10px] text-slate-400 ml-1 mt-1 block">
-                  10:30 AM
-                </span>
-              </div>
-            </div>
-
-            <div className="flex gap-3 max-w-[85%] flex-row-reverse ml-auto">
-              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-primary font-bold text-xs mt-1">
-                YO
-              </div>
-              <div>
-                <div className="bg-primary text-white p-3 rounded-2xl rounded-tr-none shadow-sm shadow-blue-500/20">
-                  <p className="text-sm">
-                    Buenísimo Juan. Acordate de revisar bien el número de motor
-                    que a veces está medio sucio.
-                  </p>
-                </div>
-                <div className="flex justify-end items-center gap-1 mt-1">
-                  <span className="text-[10px] text-slate-400">10:32 AM</span>
-                  <span className="material-symbols-outlined text-[14px] text-primary">
-                    done_all
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-3 max-w-[85%]">
-              <img
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAIlpSyjW0VtGa3WuNey-gR2qsXObLjrbfTyEVWcIp2l8btBMT-xG79trnfMdlnqPuYUHzA9Qw9Nuc2HveLmR3_oQzezjbnzZ8_3sywpZeELpL4bjONmZJT4-_ewcCLEdT2vzz3yNLSZ2Ak9khN-QUPskONx5Yh1iITrOBI9eg_y8_BaLpY0UI7aQ1vYlD8K7_A4OGzr7dlscT-OUzDVTrs53oqwfTAeAU3vqUXe6GbZ2njy3sv6T7WcaU2LYK6xt2oyqYu3NYDDg"
-                className="w-8 h-8 rounded-full object-cover mt-1"
-                alt="Other User"
-              />
-              <div>
-                <div className="bg-white dark:bg-[#1a2632] border border-slate-200 dark:border-slate-700 p-3 rounded-2xl rounded-tl-none shadow-sm">
-                  <p className="text-sm text-slate-700 dark:text-slate-300">
-                    Sisi, ya llegue a la concesionaria. Ahora te paso las fotos
-                    del motor.
-                  </p>
-                </div>
-                <span className="text-[10px] text-slate-400 ml-1 mt-1 block">
-                  10:45 AM
-                </span>
-              </div>
-            </div>
-
-            <div className="flex gap-3 max-w-[85%]">
-              <img
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAIlpSyjW0VtGa3WuNey-gR2qsXObLjrbfTyEVWcIp2l8btBMT-xG79trnfMdlnqPuYUHzA9Qw9Nuc2HveLmR3_oQzezjbnzZ8_3sywpZeELpL4bjONmZJT4-_ewcCLEdT2vzz3yNLSZ2Ak9khN-QUPskONx5Yh1iITrOBI9eg_y8_BaLpY0UI7aQ1vYlD8K7_A4OGzr7dlscT-OUzDVTrs53oqwfTAeAU3vqUXe6GbZ2njy3sv6T7WcaU2LYK6xt2oyqYu3NYDDg"
-                className="w-8 h-8 rounded-full object-cover mt-1"
-                alt="Other User"
-              />
-              <div>
-                <div className="bg-white dark:bg-[#1a2632] border border-slate-200 dark:border-slate-700 p-1 rounded-2xl rounded-tl-none shadow-sm">
-                  <div className="relative group cursor-pointer overflow-hidden rounded-xl">
-                    <img
-                      src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSjCp_lqT-6Z5zCbfkLwGKgNqJc7S4wD6L2Xg&s"
-                      alt="Engine"
-                      className="w-64 h-48 object-cover hover:scale-105 transition-transform"
-                    />
+          {activeChat ? (
+            <>
+              {/* Chat Header */}
+              <div className="h-16 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a2632] flex items-center justify-between px-4">
+                <div className="flex items-center gap-3">
+                  <button
+                    className="md:hidden p-2 -ml-2 text-slate-600"
+                    onClick={() => setMobileMenuOpen(true)}
+                  >
+                    <span className="material-symbols-outlined">menu</span>
+                  </button>
+                  <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 font-bold">
+                    {otherPersonName?.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                      {otherPersonName}
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      {activeConversation?.title}
+                    </p>
                   </div>
                 </div>
-                <span className="text-[10px] text-slate-400 ml-1 mt-1 block">
-                  10:46 AM
-                </span>
+                <Link
+                  href={`/dashboard/chat?id=${activeChat}`}
+                  className="p-2 text-slate-400 hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors"
+                >
+                  <span className="material-symbols-outlined">open_in_new</span>
+                </Link>
               </div>
-            </div>
-          </div>
 
-          {/* Input Area */}
-          <div className="p-4 bg-white dark:bg-[#1a2632] border-t border-slate-200 dark:border-slate-700">
-            <div className="flex gap-2 items-center">
-              <button className="p-2 text-slate-400 hover:text-primary transition-colors">
-                <span className="material-symbols-outlined">
-                  add_photo_alternate
-                </span>
-              </button>
-              <button className="p-2 text-slate-400 hover:text-primary transition-colors hidden sm:block">
-                <span className="material-symbols-outlined">attach_file</span>
-              </button>
-              <div className="flex-1 relative">
-                <input
-                  type="text"
-                  placeholder="Escribe un mensaje..."
-                  className="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-xl py-3 pl-4 pr-10 focus:ring-2 focus:ring-primary"
-                />
-                <button className="absolute right-2 top-2 p-1 text-slate-400 hover:text-primary">
-                  <span className="material-symbols-outlined">
-                    sentiment_satisfied
-                  </span>
-                </button>
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {messages.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full text-slate-400 opacity-60">
+                    <span className="material-symbols-outlined text-6xl mb-2">
+                      forum
+                    </span>
+                    <p>Inicia la conversación...</p>
+                  </div>
+                ) : (
+                  messages.map((msg) => {
+                    const isMe = msg.senderId === user?.uid;
+                    return (
+                      <div
+                        key={msg.id}
+                        className={`flex gap-3 max-w-[85%] ${
+                          isMe ? "flex-row-reverse ml-auto" : ""
+                        }`}
+                      >
+                        <div
+                          className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold mt-1 ${
+                            isMe
+                              ? "bg-blue-100 text-primary"
+                              : "bg-slate-200 text-slate-500"
+                          }`}
+                        >
+                          {isMe
+                            ? "YO"
+                            : otherPersonName?.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <div
+                            className={`p-3 rounded-2xl shadow-sm ${
+                              isMe
+                                ? "bg-primary text-white rounded-tr-none shadow-blue-500/20"
+                                : "bg-white dark:bg-[#1a2632] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-tl-none"
+                            }`}
+                          >
+                            {msg.imageUrl && (
+                              <img
+                                src={msg.imageUrl}
+                                alt="Adjunto"
+                                className="w-full h-auto rounded-lg mb-2 max-w-[200px] object-cover"
+                              />
+                            )}
+                            {msg.text && <p className="text-sm">{msg.text}</p>}
+                          </div>
+                          <div
+                            className={`flex items-center gap-1 mt-1 ${
+                              isMe ? "justify-end" : ""
+                            }`}
+                          >
+                            <span className="text-[10px] text-slate-400">
+                              {msg.createdAt?.toDate().toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+                <div ref={scrollRef}></div>
               </div>
-              <button className="p-3 bg-primary text-white rounded-xl hover:bg-primary-dark transition-colors shadow-lg shadow-blue-500/20">
-                <span className="material-symbols-outlined">send</span>
-              </button>
+
+              {/* Input Area */}
+              <div className="p-4 bg-white dark:bg-[#1a2632] border-t border-slate-200 dark:border-slate-700">
+                <form
+                  onSubmit={handleSendMessage}
+                  className="flex gap-2 items-center"
+                >
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    hidden
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="p-2 text-slate-400 hover:text-primary transition-colors disabled:opacity-50"
+                  >
+                    {uploading ? (
+                      <span className="w-5 h-5 border-2 border-slate-300 border-t-primary rounded-full animate-spin block"></span>
+                    ) : (
+                      <span className="material-symbols-outlined">
+                        add_photo_alternate
+                      </span>
+                    )}
+                  </button>
+                  <div className="flex-1 relative">
+                    <input
+                      type="text"
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      placeholder="Escribe un mensaje..."
+                      className="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-xl py-3 pl-4 pr-10 focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={!newMessage.trim()}
+                    className="p-3 bg-primary text-white rounded-xl hover:bg-primary-dark transition-colors shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <span className="material-symbols-outlined">send</span>
+                  </button>
+                </form>
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full text-slate-400">
+              <span className="material-symbols-outlined text-6xl mb-4">
+                chat_bubble_outline
+              </span>
+              <p className="text-lg font-medium">
+                Selecciona una conversación para comenzar
+              </p>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
