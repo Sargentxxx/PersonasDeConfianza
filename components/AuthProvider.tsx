@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useRouter, usePathname } from "next/navigation";
@@ -32,35 +32,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => unsubscribe();
   }, []);
 
+  // Ref to access the latest state inside the timeout callback
+  const authState = useRef({ user, loading });
+
   useEffect(() => {
-    // No hacer nada mientras está cargando el estado inicial
+    authState.current = { user, loading };
+  }, [user, loading]);
+
+  useEffect(() => {
+    // If still loading initially, do nothing
     if (loading) return;
 
-    if (!user) {
-      const protectedPrefixes = [
-        "/dashboard",
-        "/admin",
-        "/messages",
-        "/settings",
-      ];
+    // Check if current path is protected
+    const protectedPrefixes = [
+      "/dashboard",
+      "/admin",
+      "/messages",
+      "/settings",
+    ];
 
-      const isProtected = protectedPrefixes.some(
-        (prefix) =>
-          pathname.startsWith(prefix) ||
-          pathname.startsWith("/PersonasDeConfianza" + prefix),
-      );
+    const isProtected = protectedPrefixes.some(
+      (prefix) =>
+        pathname.startsWith(prefix) ||
+        pathname.startsWith("/PersonasDeConfianza" + prefix),
+    );
 
-      if (isProtected) {
-        console.log(
-          "Acceso protegido sin sesión, esperando brevemente antes de redirigir...",
-        );
-        const timer = setTimeout(() => {
-          // Re-chequeamos después de 2000ms para evitar falsos positivos durante la navegación
-          // Esto es crucial para GitHub Pages donde el estado de auth puede tardar un poco
+    if (isProtected && !user) {
+      console.log("Acceso protegido sin sesión, iniciando verificación...");
+
+      const timer = setTimeout(() => {
+        // CRITICAL CHECK: Use the REF to check the *current* state after the delay
+        // If we simply checked 'user' here, it would be the stale value from when the timeout started
+        const currentAuth = authState.current;
+
+        if (!currentAuth.loading && !currentAuth.user) {
+          console.log("Sesión no recuperada tras espera. Redirigiendo a /auth");
           router.push("/auth");
-        }, 2000);
-        return () => clearTimeout(timer);
-      }
+        } else {
+          console.log(
+            "Sesión recuperada justo a tiempo. Cancelando redirección.",
+          );
+        }
+      }, 2000);
+
+      return () => clearTimeout(timer);
     }
   }, [user, loading, pathname, router]);
 
