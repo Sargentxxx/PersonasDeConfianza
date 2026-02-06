@@ -43,17 +43,31 @@ export default function AuthPage() {
 
       // Fetch user role from Firestore to redirect correctly
       const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        const userRole = userData.role;
 
-        if (userRole === "client") router.push("/dashboard/client");
-        else if (userRole === "rep") router.push("/dashboard/rep");
-        else router.push("/"); // Fallback
+      // Default to the selected role if no doc exists (unlikely given flow)
+      let dbRole = role;
+
+      if (userDoc.exists()) {
+        dbRole = userDoc.data().role;
+      }
+
+      // Logic:
+      // 1. If user wants to be a Client -> Allow immediately (Reps can be Clients)
+      // 2. If user wants to be a Rep -> Check if they actually ARE a Rep
+
+      if (role === "client") {
+        router.push("/dashboard/client");
       } else {
-        // Fallback if no doc exists (legacy users or error)
-        if (role === "client") router.push("/dashboard/client");
-        else router.push("/dashboard/rep");
+        // User attempted to login as Rep
+        if (dbRole === "rep") {
+          router.push("/dashboard/rep");
+        } else {
+          // User is a client trying to access Rep dash
+          // Ideally assume they want to BECOME a rep, but for now redirect to client
+          // or show an error. Let's redirect to client with a notice?
+          // Simpler: Just redirect to client dash if they aren't a rep.
+          router.push("/dashboard/client");
+        }
       }
     } catch (err: any) {
       console.error(err);
@@ -109,33 +123,36 @@ export default function AuthPage() {
       const userDocRef = doc(db, "users", result.user.uid);
       const userDoc = await getDoc(userDocRef);
 
-      let userRole = role;
+      let dbRole = role;
 
       if (!userDoc.exists()) {
-        console.log(
-          "Creando nuevo usuario con Google:",
-          result.user.email,
-          "Rol:",
-          role,
-        );
-        // Create new user doc if it doesn't exist
+        console.log("Creando nuevo usuario con Google:", role);
+        // Create new user doc
         await setDoc(userDocRef, {
           uid: result.user.uid,
           name: result.user.displayName || "Usuario Google",
           email: result.user.email,
           phone: result.user.phoneNumber || "",
-          role: role, // Use currently selected role
+          role: role,
           createdAt: new Date().toISOString(),
         });
+        dbRole = role;
       } else {
-        // If user exits, respect their stored role
-        userRole = userDoc.data().role;
+        dbRole = userDoc.data().role;
       }
 
-      console.log("Login Google exitoso. Redirigiendo a:", userRole);
-      if (userRole === "client") router.push("/dashboard/client");
-      else if (userRole === "rep") router.push("/dashboard/rep");
-      else router.push("/");
+      console.log("Login Google exitoso. Intención:", role, "Rol BD:", dbRole);
+
+      // Same logic as handleLogin
+      if (role === "client") {
+        router.push("/dashboard/client");
+      } else {
+        if (dbRole === "rep") {
+          router.push("/dashboard/rep");
+        } else {
+          router.push("/dashboard/client");
+        }
+      }
     } catch (err: any) {
       console.error("Error completo de Google Login:", err);
       if (err.code === "auth/popup-closed-by-user") {
