@@ -186,11 +186,7 @@ function ChatContent() {
           <p>ID Tarea: {taskId}</p>
         </div>
         <button
-          onClick={() =>
-            router.push(
-              user?.role === "rep" ? "/dashboard/rep" : "/dashboard/client",
-            )
-          }
+          onClick={() => router.back()}
           className="bg-primary text-white px-6 py-2 rounded-xl font-medium hover:bg-primary-dark transition"
         >
           Volver al Panel
