@@ -33,20 +33,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    // Simple client-side route protection
-    // If not loading, and no user, and trying to access protected routes -> redirect
-    if (!loading && !user) {
-      const protectedRoutes = [
+    // Prevent redirecting while auth state is being determined
+    if (loading) return;
+
+    if (!user) {
+      // List of roots that require authentication
+      const protectedPrefixes = [
         "/dashboard",
         "/admin",
         "/messages",
         "/settings",
       ];
-      const isProtected = protectedRoutes.some((route) =>
-        pathname.startsWith(route),
+
+      // usePathname() in Next.js already handles basePath (it doesn't include it)
+      // but let's be extra safe and check for both relative and potentially full paths
+      const isProtected = protectedPrefixes.some(
+        (prefix) =>
+          pathname.startsWith(prefix) ||
+          pathname.startsWith("/PersonasDeConfianza" + prefix),
       );
 
       if (isProtected) {
+        console.log(
+          "Protected route accessed without user, redirecting to /auth",
+          pathname,
+        );
         router.push("/auth");
       }
     }

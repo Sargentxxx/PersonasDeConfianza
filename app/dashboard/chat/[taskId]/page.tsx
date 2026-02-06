@@ -41,7 +41,7 @@ export default function ChatPage({
   params: Promise<{ taskId: string }>;
 }) {
   const { taskId } = use(params);
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -54,6 +54,7 @@ export default function ChatPage({
 
   // 1. Load Task Details to verify access & show title
   useEffect(() => {
+    // Wait for auth to be ready
     if (!user || !taskId) return;
 
     const fetchTask = async () => {
@@ -63,10 +64,18 @@ export default function ChatPage({
 
         if (docSnap.exists()) {
           const data = docSnap.data() as RequestData;
-          // Simple Security Check: User must be Client OR Rep of this task
+
+          // Improved Security Check: User must be Client OR Rep of this task
           if (user.uid !== data.clientId && user.uid !== data.repId) {
-            alert("No tienes permiso para ver este chat.");
-            router.push("/dashboard/client"); // Fallback redirect
+            console.warn("Access denied: UID not in request", user.uid, data);
+
+            // Fetch user role to redirect back to the correct dashboard
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            const role = userDoc.exists() ? userDoc.data()?.role : "client";
+
+            router.push(
+              role === "rep" ? "/dashboard/rep" : "/dashboard/client",
+            );
             return;
           }
           setTaskData(data);
@@ -75,6 +84,8 @@ export default function ChatPage({
         }
       } catch (err) {
         console.error("Error fetching task:", err);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -149,7 +160,7 @@ export default function ChatPage({
     }
   };
 
-  if (loading && !taskData) {
+  if ((loading || authLoading) && !taskData) {
     return (
       <div className="flex h-screen items-center justify-center bg-slate-50 dark:bg-slate-900">
         <span className="w-10 h-10 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></span>
