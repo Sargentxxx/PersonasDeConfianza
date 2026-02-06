@@ -321,7 +321,7 @@ export default function ClientDashboard() {
                             {(req.status === "assigned" ||
                               req.status === "in_progress") && (
                               <Link
-                                href={`/dashboard/chat/${req.id}`}
+                                href={`/dashboard/chat?id=${req.id}`}
                                 className="flex-1 sm:flex-none px-5 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark transition-colors flex items-center justify-center gap-2"
                               >
                                 <span className="material-symbols-outlined text-[20px]">

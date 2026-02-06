@@ -245,7 +245,7 @@ export default function MyTasksPage() {
                       </div>
                       <div className="flex gap-2">
                         <Link
-                          href={`/dashboard/chat/${task.id}`}
+                          href={`/dashboard/chat?id=${task.id}`}
                           className="px-4 py-2 text-primary font-medium hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors flex items-center gap-2"
                         >
                           <span className="material-symbols-outlined">
