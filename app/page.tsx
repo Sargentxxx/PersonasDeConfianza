@@ -67,7 +67,7 @@ export default function LandingPage() {
 
         <div className="relative z-10 max-w-4xl mx-auto px-6 text-center space-y-8 animate-fade-in-up">
           <div className="inline-block px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-blue-200 text-sm font-medium mb-4">
-            ✨ La forma segura de delegar tareas
+            ✨ La Forma Más Segura de Delegar Tareas
           </div>
           <h1 className="text-5xl md:text-7xl font-extrabold text-white tracking-tight leading-tight">
             Tu tranquilidad es <br />
