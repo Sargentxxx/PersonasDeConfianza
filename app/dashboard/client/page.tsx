@@ -377,9 +377,15 @@ export default function ClientDashboard() {
                               </span>
                               <span>
                                 Iniciado:{" "}
-                                {req.createdAt
-                                  ?.toDate()
-                                  .toLocaleDateString("es-ES")}
+                                {req.createdAt?.toDate
+                                  ? req.createdAt
+                                      .toDate()
+                                      .toLocaleDateString("es-ES")
+                                  : req.createdAt
+                                    ? new Date(
+                                        (req.createdAt as any).seconds * 1000,
+                                      ).toLocaleDateString("es-ES")
+                                    : ""}
                               </span>
                             </div>
                           </div>
@@ -614,13 +620,23 @@ export default function ClientDashboard() {
                       Fecha del Pedido
                     </h3>
                     <p className="text-sm text-slate-600 dark:text-slate-400">
-                      {selectedRequest.createdAt
-                        ?.toDate()
-                        .toLocaleDateString("es-ES", {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })}
+                      {selectedRequest.createdAt?.toDate
+                        ? selectedRequest.createdAt
+                            .toDate()
+                            .toLocaleDateString("es-ES", {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            })
+                        : selectedRequest.createdAt
+                          ? new Date(
+                              (selectedRequest.createdAt as any).seconds * 1000,
+                            ).toLocaleDateString("es-ES", {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            })
+                          : "Fecha desconocida"}
                     </p>
                   </div>
                 </div>

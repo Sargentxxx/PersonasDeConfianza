@@ -241,7 +241,13 @@ export default function MyTasksPage() {
                         <span className="material-symbols-outlined text-lg">
                           calendar_month
                         </span>
-                        {task.createdAt?.toDate().toLocaleDateString()}
+                        {task.createdAt?.toDate
+                          ? task.createdAt.toDate().toLocaleDateString()
+                          : task.createdAt
+                            ? new Date(
+                                (task.createdAt as any).seconds * 1000,
+                              ).toLocaleDateString()
+                            : ""}
                       </div>
                       <div className="flex gap-2">
                         <Link

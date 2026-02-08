@@ -549,13 +549,23 @@ export default function RepDashboard() {
                       Fecha de Creación
                     </h3>
                     <p className="text-sm text-slate-600 dark:text-slate-400">
-                      {selectedTask.createdAt
-                        ?.toDate()
-                        .toLocaleDateString("es-ES", {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })}
+                      {selectedTask.createdAt?.toDate
+                        ? selectedTask.createdAt
+                            .toDate()
+                            .toLocaleDateString("es-ES", {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            })
+                        : selectedTask.createdAt
+                          ? new Date(
+                              (selectedTask.createdAt as any).seconds * 1000,
+                            ).toLocaleDateString("es-ES", {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            })
+                          : "Fecha desconocida"}
                     </p>
                   </div>
                 </div>
