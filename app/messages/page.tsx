@@ -43,7 +43,7 @@ interface Conversation {
 }
 
 export default function MessagesPage() {
-  const { user } = useAuth();
+  const { user, userData } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -183,12 +183,15 @@ export default function MessagesPage() {
       ? activeConversation?.repName
       : activeConversation?.clientName;
 
+  const dashboardPath =
+    userData?.role === "rep" ? "/dashboard/rep" : "/dashboard/client";
+
   return (
     <div className="bg-background-light dark:bg-background-dark min-h-screen font-sans text-slate-800 dark:text-slate-200">
       {/* Navbar */}
       <nav className="bg-white dark:bg-[#1a2632] border-b border-slate-200 dark:border-slate-700 h-16 flex items-center justify-between px-4 lg:px-8">
         <Link
-          href="/dashboard/client"
+          href={dashboardPath}
           className="flex items-center gap-3 text-slate-600 dark:text-slate-300 hover:text-primary transition-colors"
         >
           <span className="material-symbols-outlined">arrow_back</span>

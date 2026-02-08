@@ -2,16 +2,24 @@
 
 import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { useRouter, usePathname } from "next/navigation";
+import { doc, getDoc } from "firebase/firestore";
+
+interface UserData {
+  role: "client" | "rep" | string;
+  [key: string]: unknown;
+}
 
 interface AuthContextType {
   user: User | null;
+  userData: UserData | null;
   loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
+  userData: null,
   loading: true,
 });
 
@@ -19,13 +27,29 @@ export const useAuth = () => useContext(AuthContext);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
+      if (user) {
+        try {
+          const userDoc = await getDoc(doc(db, "users", user.uid));
+          if (userDoc.exists()) {
+            setUserData(userDoc.data() as UserData);
+          } else {
+            setUserData(null);
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+          setUserData(null);
+        }
+      } else {
+        setUserData(null);
+      }
       setLoading(false);
     });
 
@@ -33,11 +57,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // Ref to access the latest state inside the timeout callback
-  const authState = useRef({ user, loading });
+  const authState = useRef({ user, userData, loading });
 
   useEffect(() => {
-    authState.current = { user, loading };
-  }, [user, loading]);
+    authState.current = { user, userData, loading };
+  }, [user, userData, loading]);
 
   useEffect(() => {
     // If still loading initially, do nothing
@@ -62,7 +86,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const timer = setTimeout(() => {
         // CRITICAL CHECK: Use the REF to check the *current* state after the delay
-        // If we simply checked 'user' here, it would be the stale value from when the timeout started
         const currentAuth = authState.current;
 
         if (!currentAuth.loading && !currentAuth.user) {
@@ -79,12 +102,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user, loading, pathname, router]);
 
-  // Optional: Show a loading spinner while checking auth state globally
-  // const isProtected = ["/dashboard", "/admin", "/messages", "/settings"].some(route => pathname.startsWith(route));
-  // if (loading && isProtected) return <div className="h-screen flex items-center justify-center">Cargando...</div>;
-
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={{ user, userData, loading }}>
       {children}
     </AuthContext.Provider>
   );

@@ -6,6 +6,7 @@ import Link from "next/link";
 import MobileHeader from "@/components/MobileHeader";
 import { useAuth } from "@/components/AuthProvider";
 import { db, auth } from "@/lib/firebase";
+import NotificationBell from "@/components/NotificationBell";
 import {
   collection,
   query,
@@ -23,10 +24,14 @@ interface Request {
   title: string;
   type: string;
   status: string;
+  description?: string;
   createdAt: Timestamp;
   repId?: string;
+  budget?: string | number;
+  rating?: number;
   location?: {
     city: string;
+    address?: string;
   };
 }
 
@@ -38,6 +43,7 @@ export default function ClientDashboard() {
 
   // Rating Modal State
   const [ratingTask, setRatingTask] = useState<Request | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -145,6 +151,9 @@ export default function ClientDashboard() {
   const completedRequestsCount = requests.filter(
     (r) => r.status === "closed",
   ).length;
+  const totalInvested = requests
+    .filter((r) => r.status === "closed")
+    .reduce((sum, r) => sum + Number(r.budget || 0), 0);
 
   return (
     <div className="bg-background-light dark:bg-background-dark min-h-screen font-sans text-slate-800 dark:text-slate-200">
@@ -205,13 +214,13 @@ export default function ClientDashboard() {
                 <span className="material-symbols-outlined">chat</span>
                 Mensajes
               </Link>
-              <a
-                href="#"
+              <Link
+                href="/settings"
                 className="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white rounded-xl font-medium transition-colors"
               >
                 <span className="material-symbols-outlined">settings</span>
                 Configuración
-              </a>
+              </Link>
             </nav>
 
             <div className="p-4 border-t border-slate-200 dark:border-slate-700">
@@ -246,13 +255,30 @@ export default function ClientDashboard() {
                   Gestiona y da seguimiento a tus solicitudes activas.
                 </p>
               </div>
-              <Link
-                href="/dashboard/client/new-request"
-                className="bg-primary text-white px-6 py-3 rounded-xl font-bold hover:bg-primary-dark transition shadow-lg shadow-blue-500/20 flex items-center gap-2"
-              >
-                <span className="material-symbols-outlined">add</span>
-                Nueva Solicitud
-              </Link>
+              <div className="flex items-center gap-2 sm:gap-4">
+                <NotificationBell />
+                <div className="hidden sm:block text-right">
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                    Cliente
+                  </p>
+                  <p className="font-bold text-slate-900 dark:text-white">
+                    {user?.displayName || "Usuario"}
+                  </p>
+                </div>
+                <Link
+                  href="/settings"
+                  className="w-10 h-10 lg:w-12 lg:h-12 rounded-full border-2 border-primary/20 p-0.5 hover:border-primary transition-all overflow-hidden bg-slate-100"
+                >
+                  <img
+                    src={
+                      user?.photoURL ||
+                      "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png"
+                    }
+                    className="w-full h-full rounded-full object-cover"
+                    alt="Profile"
+                  />
+                </Link>
+              </div>
             </header>
 
             {/* Stats Grid */}
@@ -281,6 +307,19 @@ export default function ClientDashboard() {
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                   Completados
+                </p>
+              </div>
+              <div className="bg-white dark:bg-[#1a2632] p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+                <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 text-purple-600 flex items-center justify-center mb-4">
+                  <span className="material-symbols-outlined text-2xl">
+                    payments
+                  </span>
+                </div>
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">
+                  ${totalInvested}
+                </h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  Total invertido
                 </p>
               </div>
             </div>
@@ -388,7 +427,10 @@ export default function ClientDashboard() {
                                 Confirmar
                               </button>
                             ) : (
-                              <button className="flex-1 sm:flex-none px-5 py-2.5 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-white rounded-lg font-medium hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors">
+                              <button
+                                onClick={() => setSelectedRequest(req)}
+                                className="flex-1 sm:flex-none px-5 py-2.5 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-white rounded-lg font-medium hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors"
+                              >
                                 Ver Detalles
                               </button>
                             )}
@@ -466,6 +508,144 @@ export default function ClientDashboard() {
               >
                 {submitting ? "Enviando..." : "Confirmar y Cerrar"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Request Details Modal */}
+      {selectedRequest && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all"
+          onClick={() => setSelectedRequest(null)}
+        >
+          <div
+            className="bg-white dark:bg-[#1a2632] w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden animate-scale-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="relative h-48 bg-slate-100 dark:bg-slate-800">
+              {selectedRequest.location?.city ? (
+                <div className="h-full w-full bg-blue-50 dark:bg-blue-900/10 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-6xl text-primary/20">
+                    map
+                  </span>
+                </div>
+              ) : (
+                <div className="h-full w-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-6xl text-slate-400">
+                    image_not_supported
+                  </span>
+                </div>
+              )}
+              <button
+                onClick={() => setSelectedRequest(null)}
+                className="absolute top-4 right-4 w-10 h-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 transition-all font-bold shadow-lg"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-8">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900/40 text-primary text-xs font-bold uppercase tracking-wide">
+                      Trámite Activo
+                    </span>
+                    <span className="text-xs text-slate-400 font-mono">
+                      #{selectedRequest.id.slice(0, 8)}
+                    </span>
+                  </div>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white leading-tight">
+                    {selectedRequest.title}
+                  </h2>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">
+                    Presupuesto
+                  </p>
+                  <p className="text-2xl font-black text-green-600 dark:text-green-400">
+                    {selectedRequest.budget
+                      ? `$${selectedRequest.budget}`
+                      : "A cotizar"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-primary text-lg">
+                      info
+                    </span>
+                    Descripción del Trámite
+                  </h3>
+                  <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-sm bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+                    {/* Note: if description isn't in Interface, TS might complain. I'll add it if needed */}
+                    {selectedRequest.description ||
+                      "Sin descripción adicional."}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-primary text-lg">
+                        location_on
+                      </span>
+                      Ubicación
+                    </h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                      {selectedRequest.location?.city}
+                      <br />
+                      <span className="text-xs opacity-70">
+                        {selectedRequest.location?.address ||
+                          "Dirección no detallada"}
+                      </span>
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-primary text-lg">
+                        calendar_today
+                      </span>
+                      Fecha del Pedido
+                    </h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                      {selectedRequest.createdAt
+                        ?.toDate()
+                        .toLocaleDateString("es-ES", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Actions */}
+              <div className="mt-10 flex gap-4">
+                <button
+                  onClick={() => setSelectedRequest(null)}
+                  className="flex-1 py-4 text-slate-500 font-bold hover:bg-slate-50 dark:hover:bg-slate-800 rounded-2xl transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
+                >
+                  Cerrar
+                </button>
+                {["assigned", "in_progress", "completed"].includes(
+                  selectedRequest.status,
+                ) && (
+                  <Link
+                    href={`/dashboard/chat?id=${selectedRequest.id}`}
+                    className="flex-[2] py-4 bg-primary text-white font-black rounded-2xl hover:bg-primary-dark transition-all shadow-xl shadow-blue-500/25 flex items-center justify-center gap-3"
+                  >
+                    Ir al Chat
+                    <span className="material-symbols-outlined">chat</span>
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
         </div>

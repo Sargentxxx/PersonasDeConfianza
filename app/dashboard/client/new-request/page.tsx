@@ -3,10 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { auth, db } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import MobileHeader from "@/components/MobileHeader";
-import DashboardSidebar from "@/components/DashboardSidebar"; // We'll try to use the component if available, or fallback to manual layout later
 import { useAuth } from "@/components/AuthProvider";
 
 export default function NewRequestPage() {
@@ -22,6 +21,7 @@ export default function NewRequestPage() {
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
   const [date, setDate] = useState("");
+  const [budget, setBudget] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,10 +95,10 @@ export default function NewRequestPage() {
           lng,
         },
         dueDate: date,
+        budget: budget || null, // Guardamos el presupuesto
         status: "pending", // pending, assigned, in_progress, completed, cancelled
         createdAt: serverTimestamp(),
         repId: null, // No representative assigned yet
-        budget: null, // To be negotiated or set later
       });
 
       // Redirect back to dashboard
@@ -372,6 +372,18 @@ export default function NewRequestPage() {
                       value={address}
                       onChange={(e) => setAddress(e.target.value)}
                       placeholder="Ej. Av. Colón 1234"
+                      className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm focus:border-primary focus:ring-primary py-2.5 px-4"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Presupuesto Estimado ($)
+                    </label>
+                    <input
+                      type="number"
+                      value={budget}
+                      onChange={(e) => setBudget(e.target.value)}
+                      placeholder="Ej. 5000"
                       className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm focus:border-primary focus:ring-primary py-2.5 px-4"
                     />
                   </div>

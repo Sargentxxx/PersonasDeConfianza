@@ -223,7 +223,7 @@ export default function MyTasksPage() {
                             <span className="material-symbols-outlined text-sm">
                               location_on
                             </span>
-                            {task.location?.city}
+                            {task.location?.city || "Sin ubicación"}
                           </p>
                         </div>
                       </div>
@@ -236,7 +236,7 @@ export default function MyTasksPage() {
                       </p>
                     </div>
 
-                    <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-700">
+                    <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-700 gap-3">
                       <div className="flex items-center gap-2 text-sm text-slate-500">
                         <span className="material-symbols-outlined text-lg">
                           calendar_month
@@ -246,16 +246,16 @@ export default function MyTasksPage() {
                       <div className="flex gap-2">
                         <Link
                           href={`/dashboard/chat?id=${task.id}`}
-                          className="px-4 py-2 text-primary font-medium hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors flex items-center gap-2"
+                          className="px-3 py-2 text-primary font-medium hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors flex items-center gap-1 text-sm"
                         >
-                          <span className="material-symbols-outlined">
+                          <span className="material-symbols-outlined text-lg">
                             chat
                           </span>
                           Chat
                         </Link>
                         <button
                           onClick={() => setManagingTask(task)}
-                          className="px-4 py-2 bg-slate-900 dark:bg-slate-700 text-white rounded-lg font-medium hover:bg-slate-800 dark:hover:bg-slate-600 transition-colors"
+                          className="px-3 py-2 bg-slate-900 dark:bg-slate-700 text-white rounded-lg font-medium hover:bg-slate-800 dark:hover:bg-slate-600 transition-colors text-sm"
                         >
                           Gestionar
                         </button>

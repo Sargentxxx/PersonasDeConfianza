@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import MobileHeader from "@/components/MobileHeader";
 import dynamic from "next/dynamic";
 import { useAuth } from "@/components/AuthProvider";
 import { db } from "@/lib/firebase";
+import NotificationBell from "@/components/NotificationBell";
 import {
   collection,
   query,
@@ -48,6 +50,13 @@ export default function RepDashboard() {
   const [availableTasks, setAvailableTasks] = useState<Request[]>([]);
   const [loading, setLoading] = useState(true);
   const [applyingId, setApplyingId] = useState<string | null>(null);
+  const [selectedTask, setSelectedTask] = useState<Request | null>(null);
+  const [stats, setStats] = useState({
+    income: 0,
+    completed: 0,
+    rating: 0,
+    responseTime: "10min", // Placeholder for now
+  });
 
   const handleApply = async (taskId: string) => {
     if (!user || applyingId) return;
@@ -63,7 +72,6 @@ export default function RepDashboard() {
         repName: user.displayName || "Representante",
         assignedAt: serverTimestamp(),
       });
-      // The list will automatically update because of the snapshot listener
     } catch (error) {
       console.error("Error applying for task:", error);
       alert("Error al tomar la tarea. Inténtalo de nuevo.");
@@ -71,6 +79,38 @@ export default function RepDashboard() {
       setApplyingId(null);
     }
   };
+
+  // Load stats
+  useEffect(() => {
+    if (!user) return;
+    const q = query(collection(db, "requests"), where("repId", "==", user.uid));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      let income = 0;
+      let completed = 0;
+      let totalRating = 0;
+      let ratedCount = 0;
+
+      snapshot.docs.forEach((doc) => {
+        const data = doc.data();
+        if (data.status === "closed") {
+          completed++;
+          income += Number(data.budget || 0);
+          if (data.rating) {
+            totalRating += data.rating;
+            ratedCount++;
+          }
+        }
+      });
+
+      setStats((prev) => ({
+        ...prev,
+        income,
+        completed,
+        rating: ratedCount > 0 ? totalRating / ratedCount : 5.0,
+      }));
+    });
+    return () => unsubscribe();
+  }, [user]);
 
   // Load available tasks (status: "pending")
   useEffect(() => {
@@ -113,7 +153,7 @@ export default function RepDashboard() {
       case "compra":
         return "shopping_bag";
       case "real_estate":
-        return "real_estate_agent"; // Example additional type
+        return "real_estate_agent";
       default:
         return "help";
     }
@@ -159,13 +199,15 @@ export default function RepDashboard() {
               href: "/dashboard/rep/tasks",
               icon: "assignment_turned_in",
             },
-            { label: "Ingresos", href: "#", icon: "payments" },
+            {
+              label: "Historial",
+              href: "/dashboard/rep/tasks",
+              icon: "history",
+            },
             {
               label: "Mensajes",
               href: "/messages",
               icon: "chat",
-              badge: "5",
-              badgeColor: "bg-red-500",
             },
             { label: "Configuración", href: "/settings", icon: "settings" },
           ]}
@@ -195,6 +237,30 @@ export default function RepDashboard() {
                   . Aquí tienes tu resumen.
                 </p>
               </div>
+              <div className="flex items-center gap-2 sm:gap-4">
+                <NotificationBell />
+                <div className="hidden sm:block text-right">
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                    Representante
+                  </p>
+                  <p className="font-bold text-slate-900 dark:text-white">
+                    {user?.displayName || "Representante"}
+                  </p>
+                </div>
+                <Link
+                  href="/settings"
+                  className="w-10 h-10 lg:w-12 lg:h-12 rounded-full border-2 border-primary/20 p-0.5 hover:border-primary transition-all overflow-hidden bg-slate-100"
+                >
+                  <img
+                    src={
+                      user?.photoURL ||
+                      "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png"
+                    }
+                    className="w-full h-full rounded-full object-cover"
+                    alt="Profile"
+                  />
+                </Link>
+              </div>
             </header>
 
             {/* Stats Grid */}
@@ -206,10 +272,10 @@ export default function RepDashboard() {
                   </span>
                 </div>
                 <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">
-                  $0
+                  ${stats.income}
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  Ingresos este mes
+                  Ingresos totales
                 </p>
               </div>
               <div className="bg-white dark:bg-[#1a2632] p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
@@ -219,7 +285,7 @@ export default function RepDashboard() {
                   </span>
                 </div>
                 <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">
-                  0
+                  {stats.completed}
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                   Tareas completadas
@@ -232,7 +298,7 @@ export default function RepDashboard() {
                   </span>
                 </div>
                 <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">
-                  5.0
+                  {stats.rating.toFixed(1)}
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                   Calificación promedio
@@ -245,7 +311,7 @@ export default function RepDashboard() {
                   </span>
                 </div>
                 <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">
-                  10min
+                  {stats.responseTime}
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                   Tiempo resp. medio
@@ -341,10 +407,13 @@ export default function RepDashboard() {
                                   Procesando...
                                 </>
                               ) : (
-                                "Aplicar para este trabajo"
+                                "Aplicar"
                               )}
                             </button>
-                            <button className="px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-600 dark:text-slate-300 font-medium text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                            <button
+                              onClick={() => setSelectedTask(task)}
+                              className="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-600 dark:text-slate-400 font-medium text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                            >
                               Ver detalles
                             </button>
                           </div>
@@ -377,6 +446,165 @@ export default function RepDashboard() {
           </div>
         </main>
       </div>
+
+      {/* Task Details Modal */}
+      {selectedTask && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all"
+          onClick={() => setSelectedTask(null)}
+        >
+          <div
+            className="bg-white dark:bg-[#1a2632] w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden animate-scale-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="relative h-48 bg-slate-100 dark:bg-slate-800">
+              {selectedTask.location?.lat && selectedTask.location?.lng ? (
+                <div className="h-full w-full">
+                  {/* Simplified Map or placeholder */}
+                  <div className="h-full w-full bg-blue-50 dark:bg-blue-900/10 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-6xl text-primary/20">
+                      map
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="h-full w-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-6xl text-slate-400">
+                    image_not_supported
+                  </span>
+                </div>
+              )}
+              <button
+                onClick={() => setSelectedTask(null)}
+                className="absolute top-4 right-4 w-10 h-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 transition-all font-bold shadow-lg"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-8">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900/40 text-primary text-xs font-bold uppercase tracking-wide">
+                      {getTypeLabel(selectedTask.type)}
+                    </span>
+                    <span className="text-xs text-slate-400 font-mono">
+                      #{selectedTask.id.slice(0, 8)}
+                    </span>
+                  </div>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white leading-tight">
+                    {selectedTask.title}
+                  </h2>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">
+                    Presupuesto
+                  </p>
+                  <p className="text-2xl font-black text-green-600 dark:text-green-400">
+                    {selectedTask.budget
+                      ? `$${selectedTask.budget}`
+                      : "A cotizar"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-primary text-lg">
+                      info
+                    </span>
+                    Descripción del Trámite
+                  </h3>
+                  <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-sm bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+                    {selectedTask.description}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-primary text-lg">
+                        location_on
+                      </span>
+                      Ubicación
+                    </h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                      {selectedTask.location?.city}
+                      <br />
+                      <span className="text-xs opacity-70">
+                        {selectedTask.location?.address ||
+                          "Dirección no especificada"}
+                      </span>
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-primary text-lg">
+                        calendar_today
+                      </span>
+                      Fecha de Creación
+                    </h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                      {selectedTask.createdAt
+                        ?.toDate()
+                        .toLocaleDateString("es-ES", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Actions */}
+              <div className="mt-10 flex gap-4">
+                <button
+                  onClick={() => setSelectedTask(null)}
+                  className="flex-1 py-4 text-slate-500 font-bold hover:bg-slate-50 dark:hover:bg-slate-800 rounded-2xl transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
+                >
+                  Cerrar
+                </button>
+                <button
+                  onClick={() => {
+                    handleApply(selectedTask.id);
+                    setSelectedTask(null);
+                  }}
+                  disabled={applyingId === selectedTask.id}
+                  className="flex-[2] py-4 bg-primary text-white font-black rounded-2xl hover:bg-primary-dark transition-all shadow-xl shadow-blue-500/25 flex items-center justify-center gap-3 disabled:opacity-50"
+                >
+                  {applyingId === selectedTask.id
+                    ? "Procesando..."
+                    : "Aplicar para este Trabajo"}
+                  <span className="material-symbols-outlined">
+                    arrow_forward
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style jsx global>{`
+        @keyframes scaleIn {
+          from {
+            transform: scale(0.95);
+            opacity: 0;
+          }
+          to {
+            transform: scale(1);
+            opacity: 1;
+          }
+        }
+        .animate-scale-in {
+          animation: scaleIn 0.2s cubic-bezier(0, 0, 0.2, 1);
+        }
+      `}</style>
     </div>
   );
 }

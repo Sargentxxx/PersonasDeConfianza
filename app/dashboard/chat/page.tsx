@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
-import { db } from "@/lib/firebase";
+import { db, storage } from "@/lib/firebase";
 import {
   doc,
   getDoc,
@@ -15,8 +15,8 @@ import {
   serverTimestamp,
   Timestamp,
 } from "firebase/firestore";
-import { storage } from "@/lib/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { sendNotification } from "@/lib/notifications";
 
 interface Message {
   id: string;
@@ -37,7 +37,7 @@ interface RequestData {
 function ChatContent() {
   const searchParams = useSearchParams();
   const taskId = searchParams.get("id"); // Get ID from query param ?id=...
-  const { user, loading: authLoading } = useAuth();
+  const { user, userData, loading: authLoading } = useAuth();
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -48,6 +48,9 @@ function ChatContent() {
   const [accessDenied, setAccessDenied] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const dashboardPath =
+    userData?.role === "rep" ? "/dashboard/rep" : "/dashboard/client";
 
   // 1. Load Task Details to verify access & show title
   useEffect(() => {
@@ -132,6 +135,20 @@ function ChatContent() {
         senderId: user.uid,
         createdAt: serverTimestamp(),
       });
+
+      // Trigger Notification
+      const recipientId =
+        user.uid === taskData?.clientId ? taskData?.repId : taskData?.clientId;
+      if (recipientId) {
+        sendNotification({
+          recipientId,
+          title: "Nuevo mensaje",
+          message: `${user.displayName}: ${newMessage}`,
+          type: "chat",
+          link: `/dashboard/chat?id=${taskId}`,
+        });
+      }
+
       setNewMessage("");
     } catch (error) {
       console.error("Error sending message:", error);
@@ -157,6 +174,19 @@ function ChatContent() {
         senderId: user.uid,
         createdAt: serverTimestamp(),
       });
+
+      // Trigger Notification
+      const recipientId =
+        user.uid === taskData?.clientId ? taskData?.repId : taskData?.clientId;
+      if (recipientId) {
+        sendNotification({
+          recipientId,
+          title: "Nueva imagen enviada",
+          message: `${user.displayName} ha enviado una imagen.`,
+          type: "chat",
+          link: `/dashboard/chat?id=${taskId}`,
+        });
+      }
     } catch (error) {
       console.error("Error uploading image:", error);
       alert("Error al subir imagen.");
@@ -186,7 +216,7 @@ function ChatContent() {
           <p>ID Tarea: {taskId}</p>
         </div>
         <button
-          onClick={() => router.back()}
+          onClick={() => router.push(dashboardPath)}
           className="bg-primary text-white px-6 py-2 rounded-xl font-medium hover:bg-primary-dark transition"
         >
           Volver al Panel

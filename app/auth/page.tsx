@@ -44,30 +44,26 @@ export default function AuthPage() {
       // Fetch user role from Firestore to redirect correctly
       const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
 
-      // Default to the selected role if no doc exists (unlikely given flow)
-      let dbRole = role;
+      // CRITICAL: Use Firestore role, NOT the UI state 'role'
+      let dbRole: string = "client"; // Safe default fallback
 
       if (userDoc.exists()) {
         dbRole = userDoc.data().role;
+      } else {
+        console.warn(
+          "Usuario sin documento en Firestore, usando rol por defecto: client",
+        );
       }
 
-      // Logic:
-      // 1. If user wants to be a Client -> Allow immediately (Reps can be Clients)
-      // 2. If user wants to be a Rep -> Check if they actually ARE a Rep
+      console.log("Login exitoso. Rol en BD:", dbRole);
 
-      if (role === "client") {
-        router.push("/dashboard/client");
+      // Redirection logic based on real DB role
+      if (dbRole === "admin") {
+        router.push("/admin");
+      } else if (dbRole === "rep") {
+        router.push("/dashboard/rep");
       } else {
-        // User attempted to login as Rep
-        if (dbRole === "rep") {
-          router.push("/dashboard/rep");
-        } else {
-          // User is a client trying to access Rep dash
-          // Ideally assume they want to BECOME a rep, but for now redirect to client
-          // or show an error. Let's redirect to client with a notice?
-          // Simpler: Just redirect to client dash if they aren't a rep.
-          router.push("/dashboard/client");
-        }
+        router.push("/dashboard/client");
       }
     } catch (err: any) {
       console.error(err);
@@ -123,11 +119,11 @@ export default function AuthPage() {
       const userDocRef = doc(db, "users", result.user.uid);
       const userDoc = await getDoc(userDocRef);
 
-      let dbRole = role;
+      let dbRole: string;
 
       if (!userDoc.exists()) {
         console.log("Creando nuevo usuario con Google:", role);
-        // Create new user doc
+        // Create new user doc - HERE we DO use the UI 'role' because it's a new account
         await setDoc(userDocRef, {
           uid: result.user.uid,
           name: result.user.displayName || "Usuario Google",
@@ -136,22 +132,21 @@ export default function AuthPage() {
           role: role,
           createdAt: new Date().toISOString(),
         });
-        dbRole = role;
+        dbRole = role; // New user: use selected role from UI
       } else {
+        // Existing user: ALWAYS use Firestore role, ignore UI selection
         dbRole = userDoc.data().role;
       }
 
-      console.log("Login Google exitoso. Intención:", role, "Rol BD:", dbRole);
+      console.log("Login Google exitoso. Rol en BD:", dbRole);
 
-      // Same logic as handleLogin
-      if (role === "client") {
-        router.push("/dashboard/client");
+      // Redirection logic based on real DB role
+      if (dbRole === "admin") {
+        router.push("/admin");
+      } else if (dbRole === "rep") {
+        router.push("/dashboard/rep");
       } else {
-        if (dbRole === "rep") {
-          router.push("/dashboard/rep");
-        } else {
-          router.push("/dashboard/client");
-        }
+        router.push("/dashboard/client");
       }
     } catch (err: any) {
       console.error("Error completo de Google Login:", err);
