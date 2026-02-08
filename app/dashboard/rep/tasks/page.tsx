@@ -148,7 +148,7 @@ export default function MyTasksPage() {
               href: "/dashboard/rep/tasks",
               icon: "assignment_turned_in",
             }, // Active link
-            { label: "Ingresos", href: "#", icon: "payments" },
+            { label: "Ingresos", href: "/dashboard/rep", icon: "payments" },
             {
               label: "Mensajes",
               href: "/messages",
