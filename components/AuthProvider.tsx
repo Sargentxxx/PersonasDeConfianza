@@ -102,6 +102,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user, loading, pathname, router]);
 
+  // ROLE-BASED ACCESS CONTROL
+  useEffect(() => {
+    // Wait until we have user data
+    if (loading || !user || !userData) return;
+
+    const userRole = userData.role || "client";
+    const normalizedPath = pathname.startsWith("/PersonasDeConfianza")
+      ? pathname.substring("/PersonasDeConfianza".length)
+      : pathname;
+
+    // Define role-specific allowed routes
+    const roleRoutes: Record<string, string[]> = {
+      admin: ["/admin"],
+      rep: ["/dashboard/rep"],
+      client: ["/dashboard/client"],
+    };
+
+    // Get allowed paths for current user's role
+    const allowedPaths = roleRoutes[userRole] || roleRoutes.client;
+
+    // Check if current path starts with any allowed path
+    const isAllowedPath = allowedPaths.some((path) =>
+      normalizedPath.startsWith(path),
+    );
+
+    // If trying to access a dashboard route
+    const isDashboardRoute =
+      normalizedPath.startsWith("/dashboard/") ||
+      normalizedPath.startsWith("/admin");
+
+    // If user is on a dashboard route but not their own, redirect
+    if (isDashboardRoute && !isAllowedPath) {
+      console.log(
+        `⚠️ Usuario con rol "${userRole}" intenta acceder a "${normalizedPath}". Redirigiendo...`,
+      );
+
+      // Redirect to correct dashboard based on role
+      if (userRole === "admin") {
+        router.push("/admin");
+      } else if (userRole === "rep") {
+        router.push("/dashboard/rep");
+      } else {
+        router.push("/dashboard/client");
+      }
+    }
+  }, [user, userData, loading, pathname, router]);
+
   return (
     <AuthContext.Provider value={{ user, userData, loading }}>
       {children}
