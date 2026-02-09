@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -56,200 +57,215 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* Hero Section - Divided Layout */}
-      <header className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20 pb-32">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900/30 to-slate-900"></div>
+      {/* Hero Section - Full Background */}
+      <header className="relative min-h-[90vh] flex items-center justify-center overflow-hidden pt-32">
+        {/* Background Image */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?ixlib=rb-4.0.3&auto=format&fit=crop&w=2069&q=80"
+            alt="Amigos conversando y sonriendo"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-900/90 via-slate-900/60 to-transparent"></div>
+        </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
-          {/* Left: Text Content */}
-          <div className="space-y-8 animate-fade-in-up">
-            <div className="inline-block px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-blue-200 text-sm font-medium">
-              ✨ La Forma Más Segura de Delegar Tareas
+        <div className="relative z-10 max-w-7xl mx-auto px-6 w-full">
+          <div className="max-w-2xl animate-fade-in-up">
+            <div className="inline-block px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-blue-200 text-sm font-medium mb-6">
+              ✨ Confianza y Seguridad Garantizada
             </div>
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-white tracking-tight leading-tight">
+            <h1 className="text-5xl md:text-7xl font-extrabold text-white tracking-tight leading-tight mb-6">
               Tu tranquilidad es{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
                 nuestra prioridad
               </span>
             </h1>
-            <p className="text-lg md:text-xl text-slate-300 leading-relaxed max-w-lg">
+            <p className="text-xl text-slate-200 leading-relaxed mb-10 max-w-xl">
               Conectamos a personas que necesitan ayuda con profesionales de
-              confianza verificados. Sin complicaciones, sin riesgos.
+              confianza verificados. Una comunidad segura para resolver tus
+              tareas diarias.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-start gap-4 pt-4">
+            <div className="flex flex-col sm:flex-row gap-4">
               <Link
                 href="/auth?mode=signup"
-                className="w-full sm:w-auto px-8 py-4 rounded-full bg-primary text-white font-bold text-lg hover:bg-primary-dark shadow-xl shadow-blue-500/20 transition-all transform hover:-translate-y-1"
+                className="px-8 py-4 rounded-full bg-primary text-white font-bold text-lg hover:bg-primary-dark shadow-xl shadow-blue-500/20 transition-all transform hover:-translate-y-1 text-center"
               >
-                Necesito Ayuda
+                Empezar Ahora
               </Link>
               <Link
-                href="/auth?mode=signup&role=rep"
-                className="w-full sm:w-auto px-8 py-4 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white font-bold text-lg hover:bg-white/20 transition-all"
+                href="#como-funciona"
+                className="px-8 py-4 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white font-bold text-lg hover:bg-white/20 transition-all text-center"
               >
-                Soy Profesional
+                Ver cómo funciona
               </Link>
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-8 pt-8 border-t border-white/10">
-              <div>
-                <div className="text-3xl font-bold text-white">500+</div>
-                <div className="text-sm text-slate-400">Clientes Felices</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-white">100+</div>
-                <div className="text-sm text-slate-400">Profesionales</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-white">4.9⭐</div>
-                <div className="text-sm text-slate-400">Calificación</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right: Image */}
-          <div className="relative animate-fade-in-up animation-delay-200">
-            <div className="relative rounded-3xl overflow-hidden shadow-2xl">
-              <img
-                src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?ixlib=rb-4.0.3&auto=format&fit=crop&w=1740&q=80"
-                alt="Equipo trabajando"
-                className="w-full h-auto"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-blue-600/20 to-transparent"></div>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Why Choose Us */}
-      <section className="py-32 bg-white dark:bg-slate-900">
+      {/* Roles Selection Section */}
+      <section className="py-20 bg-slate-50 dark:bg-slate-900">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Client Card */}
+            <Link
+              href="/auth?mode=signup&role=client"
+              className="group relative h-[500px] rounded-3xl overflow-hidden shadow-2xl transition-all hover:scale-[1.02]"
+            >
+              <div className="absolute inset-0">
+                <img
+                  src="https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1080&q=80"
+                  alt="Persona relajada"
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/40 to-transparent"></div>
+              </div>
+              <div className="absolute inset-0 p-10 flex flex-col justify-end">
+                <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-6 text-white">
+                  <span className="material-symbols-outlined text-3xl">
+                    person
+                  </span>
+                </div>
+                <h3 className="text-4xl font-bold text-white mb-4">
+                  Para Clientes
+                </h3>
+                <p className="text-lg text-slate-200 mb-8 max-w-md">
+                  Delega tareas tediosas y recupera tu tiempo libre. Seguridad y
+                  calidad garantizada en cada servicio.
+                </p>
+                <div className="inline-flex items-center text-white font-bold group-hover:underline">
+                  Regístrate como Cliente
+                  <span className="material-symbols-outlined ml-2">
+                    arrow_forward
+                  </span>
+                </div>
+              </div>
+            </Link>
+
+            {/* Professional Card */}
+            <Link
+              href="/auth?mode=signup&role=rep"
+              className="group relative h-[500px] rounded-3xl overflow-hidden shadow-2xl transition-all hover:scale-[1.02]"
+            >
+              <div className="absolute inset-0">
+                <img
+                  src="https://images.unsplash.com/photo-1542744173-8e7e53415bb0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1080&q=80"
+                  alt="Profesional trabajando"
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/40 to-transparent"></div>
+              </div>
+              <div className="absolute inset-0 p-10 flex flex-col justify-end">
+                <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-6 text-white">
+                  <span className="material-symbols-outlined text-3xl">
+                    badge
+                  </span>
+                </div>
+                <h3 className="text-4xl font-bold text-white mb-4">
+                  Para Profesionales
+                </h3>
+                <p className="text-lg text-slate-200 mb-8 max-w-md">
+                  Accede a trabajos seguros, gestiona tu agenda y crece
+                  profesionalmente con el respaldo de nuestra plataforma.
+                </p>
+                <div className="inline-flex items-center text-emerald-400 font-bold group-hover:underline">
+                  Únete como Representante
+                  <span className="material-symbols-outlined ml-2">
+                    arrow_forward
+                  </span>
+                </div>
+              </div>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* How it works - Simplified for Seniors */}
+      <section id="como-funciona" className="py-24 bg-white dark:bg-[#1a2632]">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">
-              ¿Por qué elegirnos?
+            <h2 className="text-4xl font-bold text-slate-900 dark:text-white mb-6">
+              Tan simple como 1, 2, 3
             </h2>
-            <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">
-              Nos destacamos por nuestra dedicación a la calidad y seguridad en
-              cada servicio.
+            <p className="text-xl text-slate-500 dark:text-slate-400 max-w-3xl mx-auto">
+              Hemos diseñado nuestra plataforma pensando en ti. Sin
+              complicaciones tecnológicas.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              {
-                icon: "verified_user",
-                title: "Verificación Rigurosa",
-                desc: "Todos nuestros representantes pasan por un proceso de verificación exhaustivo.",
-                color: "bg-blue-500",
-              },
-              {
-                icon: "bolt",
-                title: "Respuesta Rápida",
-                desc: "Conexión inmediata con profesionales listos para ayudarte.",
-                color: "bg-yellow-500",
-              },
-              {
-                icon: "lock",
-                title: "100% Seguro",
-                desc: "Pagos protegidos y garantía de servicio en todas las transacciones.",
-                color: "bg-emerald-500",
-              },
-              {
-                icon: "star",
-                title: "Calificaciones Reales",
-                desc: "Sistema de reviews transparente para que tomes la mejor decisión.",
-                color: "bg-purple-500",
-              },
-            ].map((benefit, idx) => (
-              <div
-                key={idx}
-                className="group p-8 rounded-3xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 hover:shadow-xl hover:-translate-y-2 transition-all duration-300"
-              >
-                <div
-                  className={`w-14 h-14 ${benefit.color} text-white rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}
-                >
-                  <span className="material-symbols-outlined text-3xl">
-                    {benefit.icon}
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Explainer Video Placeholder */}
+            <div
+              className="relative rounded-3xl overflow-hidden shadow-2xl aspect-video bg-slate-900 group cursor-pointer"
+              onClick={() => setShowVideo(true)}
+            >
+              <img
+                src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=1740&q=80"
+                alt="Video explicativo"
+                className="w-full h-full object-cover opacity-60 transition-opacity group-hover:opacity-40"
+              />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                  <span className="material-symbols-outlined text-primary text-4xl ml-2">
+                    play_arrow
                   </span>
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">
-                  {benefit.title}
-                </h3>
-                <p className="text-slate-500 dark:text-slate-400 leading-relaxed">
-                  {benefit.desc}
+              </div>
+              <div className="absolute bottom-6 left-6 right-6">
+                <p className="text-white font-medium text-lg text-center">
+                  Ver video: Cómo funciona PersonasDeConfianza
                 </p>
               </div>
-            ))}
+            </div>
+
+            {/* Steps */}
+            <div className="space-y-8">
+              {[
+                {
+                  step: "1",
+                  title: "Dinos qué necesitas",
+                  desc: "Escribe brevemente qué ayuda necesitas. Puede ser desde arreglar algo en casa hasta ayuda con un trámite.",
+                  icon: "edit_note",
+                },
+                {
+                  step: "2",
+                  title: "Te asignamos a alguien de confianza",
+                  desc: "Buscamos al mejor profesional verificado para tu tarea. Te avisaremos quién es y cuándo irá.",
+                  icon: "person_check",
+                },
+                {
+                  step: "3",
+                  title: "¡Listo! Problema resuelto",
+                  desc: "El profesional realiza el trabajo. Solo pagas cuando estás conforme con el resultado.",
+                  icon: "verified",
+                },
+              ].map((item, idx) => (
+                <div key={idx} className="flex gap-6">
+                  <div className="flex-shrink-0">
+                    <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xl">
+                      {item.step}
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+                      {item.title}
+                    </h3>
+                    <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-lg">
+                      {item.desc}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* How it works */}
-      <section className="py-32 bg-slate-50 dark:bg-[#1a2632]">
+      {/* Pricing Section - Restored */}
+      <section className="py-24 bg-slate-50 dark:bg-slate-900">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-20">
-            <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4">
-              ¿Cómo funciona?
-            </h2>
-            <p className="text-lg text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">
-              Simplificamos el proceso de contratación para que puedas enfocarte
-              en lo importante.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-12">
-            {[
-              {
-                icon: "post_add",
-                title: "1. Publica tu solicitud",
-                desc: "Describe qué necesitas. Desde reparaciones en el hogar hasta trámites personales.",
-                color:
-                  "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
-              },
-              {
-                icon: "verified_user",
-                title: "2. Conecta con expertos",
-                desc: "Nuestros representantes verificados aceptarán tu tarea al instante.",
-                color:
-                  "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400",
-              },
-              {
-                icon: "thumb_up",
-                title: "3. Solución garantizada",
-                desc: "Recibe el servicio, valida el trabajo y califica tu experiencia.",
-                color:
-                  "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400",
-              },
-            ].map((step, idx) => (
-              <div
-                key={idx}
-                className="group p-10 rounded-3xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:shadow-2xl transition-all duration-300"
-              >
-                <div
-                  className={`w-20 h-20 ${step.color} rounded-2xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform`}
-                >
-                  <span className="material-symbols-outlined text-4xl">
-                    {step.icon}
-                  </span>
-                </div>
-                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
-                  {step.title}
-                </h3>
-                <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-lg">
-                  {step.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Section */}
-      <section className="py-32 bg-white dark:bg-slate-900">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-20">
+          <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4">
               Planes transparentes
             </h2>
@@ -261,7 +277,7 @@ export default function LandingPage() {
 
           <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
             {/* Client Plan */}
-            <div className="p-10 rounded-3xl bg-slate-50 dark:bg-slate-800/50 border-2 border-slate-200 dark:border-slate-700 hover:shadow-xl transition-all">
+            <div className="p-10 rounded-3xl bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 hover:shadow-xl transition-all">
               <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl flex items-center justify-center mb-6">
                 <span className="material-symbols-outlined text-3xl">
                   person
@@ -276,30 +292,22 @@ export default function LandingPage() {
                 </span>
               </div>
               <ul className="space-y-4 mb-8">
-                <li className="flex items-start gap-3 text-slate-600 dark:text-slate-400">
-                  <span className="material-symbols-outlined text-green-500">
-                    check_circle
-                  </span>
-                  <span>Publicar solicitudes ilimitadas</span>
-                </li>
-                <li className="flex items-start gap-3 text-slate-600 dark:text-slate-400">
-                  <span className="material-symbols-outlined text-green-500">
-                    check_circle
-                  </span>
-                  <span>Conexión con profesionales verificados</span>
-                </li>
-                <li className="flex items-start gap-3 text-slate-600 dark:text-slate-400">
-                  <span className="material-symbols-outlined text-green-500">
-                    check_circle
-                  </span>
-                  <span>Sistema de chat integrado</span>
-                </li>
-                <li className="flex items-start gap-3 text-slate-600 dark:text-slate-400">
-                  <span className="material-symbols-outlined text-green-500">
-                    check_circle
-                  </span>
-                  <span>Soporte 24/7</span>
-                </li>
+                {[
+                  "Publicar solicitudes ilimitadas",
+                  "Conexión con profesionales verificados",
+                  "Sistema de chat integrado",
+                  "Soporte 24/7",
+                ].map((item, i) => (
+                  <li
+                    key={i}
+                    className="flex items-center gap-3 text-slate-600 dark:text-slate-400"
+                  >
+                    <span className="material-symbols-outlined text-green-500">
+                      check_circle
+                    </span>
+                    <span>{item}</span>
+                  </li>
+                ))}
               </ul>
               <Link
                 href="/auth?mode=signup&role=client"
@@ -309,7 +317,7 @@ export default function LandingPage() {
               </Link>
             </div>
 
-            {/* Rep Plan - Highlighted */}
+            {/* Rep Plan */}
             <div className="p-10 rounded-3xl bg-gradient-to-br from-blue-500 to-blue-600 border-2 border-blue-400 hover:shadow-2xl transition-all relative overflow-hidden">
               <div className="absolute top-4 right-4 px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm font-medium">
                 Recomendado
@@ -327,30 +335,19 @@ export default function LandingPage() {
                 <span className="text-white/80 ml-2">comisión</span>
               </div>
               <ul className="space-y-4 mb-8">
-                <li className="flex items-start gap-3 text-white/90">
-                  <span className="material-symbols-outlined text-yellow-300">
-                    check_circle
-                  </span>
-                  <span>Acceso a todos los trabajos</span>
-                </li>
-                <li className="flex items-start gap-3 text-white/90">
-                  <span className="material-symbols-outlined text-yellow-300">
-                    check_circle
-                  </span>
-                  <span>Pagos seguros y puntuales</span>
-                </li>
-                <li className="flex items-start gap-3 text-white/90">
-                  <span className="material-symbols-outlined text-yellow-300">
-                    check_circle
-                  </span>
-                  <span>Gestión de agenda integrada</span>
-                </li>
-                <li className="flex items-start gap-3 text-white/90">
-                  <span className="material-symbols-outlined text-yellow-300">
-                    check_circle
-                  </span>
-                  <span>Dashboard de estadísticas</span>
-                </li>
+                {[
+                  "Acceso a todos los trabajos",
+                  "Pagos seguros y puntuales",
+                  "Gestión de agenda integrada",
+                  "Dashboard de estadísticas",
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-3 text-white/90">
+                    <span className="material-symbols-outlined text-yellow-300">
+                      check_circle
+                    </span>
+                    <span>{item}</span>
+                  </li>
+                ))}
               </ul>
               <Link
                 href="/auth?mode=signup&role=rep"
@@ -363,8 +360,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-32 bg-slate-50 dark:bg-[#1a2632]">
+      {/* Testimonials Section - Restored */}
+      <section className="py-24 bg-white dark:bg-[#1a2632]">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-20">
             <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4">
@@ -405,7 +402,7 @@ export default function LandingPage() {
             ].map((testimonial, idx) => (
               <div
                 key={idx}
-                className="p-8 rounded-3xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:shadow-xl transition-all"
+                className="p-8 rounded-3xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:shadow-xl transition-all"
               >
                 <div className="flex items-center gap-4 mb-6">
                   <img
@@ -431,6 +428,68 @@ export default function LandingPage() {
                 </div>
                 <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
                   "{testimonial.text}"
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Why Choose Us */}
+      <section className="py-24 bg-slate-50 dark:bg-slate-900">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">
+              ¿Por qué somos diferentes?
+            </h2>
+            <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">
+              Tu seguridad no es negociable.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {[
+              {
+                icon: "verified_user",
+                title: "Verificación Total",
+                desc: "Entrevistamos personalmente a cada representante.",
+                color: "bg-blue-500",
+              },
+              {
+                icon: "support_agent",
+                title: "Atención Humana",
+                desc: "¿Dudas? Llámanos. Hablarás con una persona, no un robot.",
+                color: "bg-yellow-500",
+              },
+              {
+                icon: "lock",
+                title: "Pagos Protegidos",
+                desc: "Tu dinero está seguro hasta que el trabajo se complete.",
+                color: "bg-emerald-500",
+              },
+              {
+                icon: "thumb_up",
+                title: "Garantía de Satisfacción",
+                desc: "Si no quedas conforme, lo solucionamos.",
+                color: "bg-purple-500",
+              },
+            ].map((benefit, idx) => (
+              <div
+                key={idx}
+                className="group p-8 rounded-3xl bg-white dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 hover:shadow-xl hover:-translate-y-2 transition-all duration-300"
+              >
+                <div
+                  className={`w-14 h-14 ${benefit.color} text-white rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}
+                >
+                  <span className="material-symbols-outlined text-3xl">
+                    {benefit.icon}
+                  </span>
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">
+                  {benefit.title}
+                </h3>
+                <p className="text-slate-500 dark:text-slate-400 leading-relaxed">
+                  {benefit.desc}
                 </p>
               </div>
             ))}
@@ -533,7 +592,7 @@ export default function LandingPage() {
                   fill="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.954 10.954v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                 </svg>
               </a>
               <a
@@ -554,16 +613,42 @@ export default function LandingPage() {
         </div>
       </footer>
 
+      {/* Video Modal */}
+      {showVideo && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in-up">
+          <div className="relative w-full max-w-4xl bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-2xl">
+            <button
+              onClick={() => setShowVideo(false)}
+              className="absolute top-4 right-4 z-10 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors"
+            >
+              <span className="material-symbols-outlined">close</span>
+            </button>
+            <div className="aspect-video bg-black">
+              <video
+                src="https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4"
+                className="w-full h-full object-cover"
+                controls
+                autoPlay
+              >
+                Tu navegador no soporta el elemento de video.
+              </video>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style jsx>{`
         .animate-fade-in-up {
           animation: fadeInUp 0.8s ease-out forwards;
-          opacity: 0;
-          transform: translateY(20px);
         }
         .animation-delay-200 {
           animation-delay: 0.2s;
         }
         @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
           to {
             opacity: 1;
             transform: translateY(0);
