@@ -365,7 +365,7 @@ export default function SettingsPage() {
                         { id: "back", label: "DNI (Dorso)", icon: "badge" },
                         { id: "selfie", label: "Selfie con DNI", icon: "face" },
                       ].map((docType) => {
-                        const isUploaded = userData?.[`doc_${docType.id}`];
+                        const isUploaded = !!userData?.[`doc_${docType.id}`];
                         return (
                           <button
                             key={docType.id}
