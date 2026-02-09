@@ -625,7 +625,7 @@ export default function LandingPage() {
             </button>
             <div className="aspect-video bg-black">
               <video
-                src="/videos/demo.mp4"
+                src="/PersonasDeConfianza/videos/demo.mp4"
                 className="w-full h-full"
                 controls
                 autoPlay
