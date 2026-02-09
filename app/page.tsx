@@ -625,8 +625,8 @@ export default function LandingPage() {
             </button>
             <div className="aspect-video bg-black">
               <video
-                src="https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4"
-                className="w-full h-full object-cover"
+                src="/videos/demo.mp4"
+                className="w-full h-full"
                 controls
                 autoPlay
               >
