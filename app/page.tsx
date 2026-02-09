@@ -427,7 +427,7 @@ export default function LandingPage() {
                   ))}
                 </div>
                 <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                  "{testimonial.text}"
+                  &quot;{testimonial.text}&quot;
                 </p>
               </div>
             ))}
@@ -625,10 +625,12 @@ export default function LandingPage() {
             </button>
             <div className="aspect-video bg-black">
               <video
-                src="/PersonasDeConfianza/videos/demo.mp4"
+                src="/personas-de-confianza/videos/demo.mp4"
                 className="w-full h-full"
                 controls
                 autoPlay
+                muted
+                playsInline
               >
                 Tu navegador no soporta el elemento de video.
               </video>
