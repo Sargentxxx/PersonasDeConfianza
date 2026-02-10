@@ -625,7 +625,7 @@ export default function LandingPage() {
             </button>
             <div className="aspect-video bg-black">
               <video
-                src="/videos/Personas_de_Confianza.mp4"
+                src="/videos/Personas_de_Confianza_Web.webm"
                 className="w-full h-full"
                 controls
                 autoPlay
@@ -636,7 +636,7 @@ export default function LandingPage() {
                   console.error("Error loading video:", e);
                   console.error(
                     "Video source:",
-                    "/videos/Personas_de_Confianza.mp4",
+                    "/videos/Personas_de_Confianza_Web.webm",
                   );
                 }}
               >

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { db } from "@/lib/firebase";
 import {
@@ -43,6 +44,7 @@ interface Conversation {
 }
 
 export default function MessagesPage() {
+  const router = useRouter();
   const { user, userData } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeChat] = useState<string | null>(null);
@@ -261,7 +263,7 @@ export default function MessagesPage() {
                 <div
                   key={conv.id}
                   onClick={() => {
-                    window.location.href = `/dashboard/chat?id=${conv.id}`;
+                    router.push(`/dashboard/chat?id=${conv.id}`);
                   }}
                   className={`p-4 border-b border-slate-100 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${
                     activeChat === conv.id
