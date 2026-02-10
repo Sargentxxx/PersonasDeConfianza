@@ -15,6 +15,7 @@ import {
   serverTimestamp,
   Timestamp,
   limit,
+  QuerySnapshot,
 } from "firebase/firestore";
 import { storage } from "@/lib/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -44,7 +45,7 @@ interface Conversation {
 export default function MessagesPage() {
   const { user, userData } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [activeChat, setActiveChat] = useState<string | null>(null);
+  const [activeChat] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
