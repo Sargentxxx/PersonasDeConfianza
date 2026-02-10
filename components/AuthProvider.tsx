@@ -8,6 +8,10 @@ import { doc, getDoc } from "firebase/firestore";
 
 interface UserData {
   role: "client" | "rep" | string;
+  address?: string;
+  profession?: string;
+  specialization?: string;
+  schedule?: string;
   [key: string]: unknown;
 }
 
@@ -112,6 +116,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       ? pathname.substring("/PersonasDeConfianza".length)
       : pathname;
 
+    // Define shared routes accessible by all authenticated users
+    const sharedRoutes = ["/dashboard/chat", "/messages", "/settings"];
+
+    // Check if current route is a shared route
+    const isSharedRoute = sharedRoutes.some((route) =>
+      normalizedPath.startsWith(route),
+    );
+
     // Define role-specific allowed routes
     const roleRoutes: Record<string, string[]> = {
       admin: ["/admin"],
@@ -133,7 +145,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       normalizedPath.startsWith("/admin");
 
     // If user is on a dashboard route but not their own, redirect
-    if (isDashboardRoute && !isAllowedPath) {
+    // BUT allow shared routes for all users
+    if (isDashboardRoute && !isAllowedPath && !isSharedRoute) {
       console.log(
         `⚠️ Usuario con rol "${userRole}" intenta acceder a "${normalizedPath}". Redirigiendo...`,
       );

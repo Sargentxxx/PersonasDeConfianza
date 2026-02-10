@@ -14,7 +14,6 @@ import {
   addDoc,
   serverTimestamp,
   Timestamp,
-  or,
   limit,
 } from "firebase/firestore";
 import { storage } from "@/lib/firebase";
@@ -58,25 +57,27 @@ export default function MessagesPage() {
   useEffect(() => {
     if (!user) return;
 
-    const q = query(
+    // Split 'or' query into two for better index compatibility
+    const q1 = query(
       collection(db, "requests"),
-      or(where("clientId", "==", user.uid), where("repId", "==", user.uid)),
+      where("clientId", "==", user.uid),
+      orderBy("createdAt", "desc"),
+    );
+    const q2 = query(
+      collection(db, "requests"),
+      where("repId", "==", user.uid),
       orderBy("createdAt", "desc"),
     );
 
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
+    const handleSnapshot = async (snapshot: QuerySnapshot) => {
       const convs: Conversation[] = [];
-
       for (const doc of snapshot.docs) {
         const data = doc.data();
-
-        // Get the last message for this conversation
         const messagesQuery = query(
           collection(db, "requests", doc.id, "messages"),
           orderBy("createdAt", "desc"),
           limit(1),
         );
-
         const messagesSnapshot = await getDocs(messagesQuery);
         const lastMsg = messagesSnapshot.docs[0]?.data();
 
@@ -96,18 +97,40 @@ export default function MessagesPage() {
             : undefined,
         });
       }
+      return convs;
+    };
 
-      setConversations(convs);
+    const unsubscribe1 = onSnapshot(q1, async (snapshot) => {
+      const clientConvs = await handleSnapshot(snapshot);
+      setConversations((prev) => {
+        const others = prev.filter((c) => c.repId === user.uid);
+        return [...clientConvs, ...others].sort(
+          (a, b) =>
+            (b.lastMessage?.createdAt?.toMillis() || 0) -
+            (a.lastMessage?.createdAt?.toMillis() || 0),
+        );
+      });
       setLoading(false);
-
-      // Auto-select first conversation if none selected
-      if (!activeChat && convs.length > 0) {
-        setActiveChat(convs[0].id);
-      }
     });
 
-    return () => unsubscribe();
-  }, [user, activeChat]);
+    const unsubscribe2 = onSnapshot(q2, async (snapshot) => {
+      const repConvs = await handleSnapshot(snapshot);
+      setConversations((prev) => {
+        const others = prev.filter((c) => c.clientId === user.uid);
+        return [...others, ...repConvs].sort(
+          (a, b) =>
+            (b.lastMessage?.createdAt?.toMillis() || 0) -
+            (a.lastMessage?.createdAt?.toMillis() || 0),
+        );
+      });
+      setLoading(false);
+    });
+
+    return () => {
+      unsubscribe1();
+      unsubscribe2();
+    };
+  }, [user]);
 
   // 2. Load messages for active conversation
   useEffect(() => {
@@ -237,8 +260,7 @@ export default function MessagesPage() {
                 <div
                   key={conv.id}
                   onClick={() => {
-                    setActiveChat(conv.id);
-                    setMobileMenuOpen(false);
+                    window.location.href = `/dashboard/chat?id=${conv.id}`;
                   }}
                   className={`p-4 border-b border-slate-100 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${
                     activeChat === conv.id
@@ -378,10 +400,14 @@ export default function MessagesPage() {
                             }`}
                           >
                             <span className="text-[10px] text-slate-400">
-                              {msg.createdAt?.toDate().toLocaleTimeString([], {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
+                              {msg.createdAt?.toDate
+                                ? msg.createdAt
+                                    .toDate()
+                                    .toLocaleTimeString([], {
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    })
+                                : "Enviando..."}
                             </span>
                           </div>
                         </div>

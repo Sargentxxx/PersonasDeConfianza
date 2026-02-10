@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import MobileHeader from "@/components/MobileHeader";
 import dynamic from "next/dynamic";
@@ -45,7 +44,7 @@ interface Request {
 
 export default function RepDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { user } = useAuth();
+  const { user, userData } = useAuth();
 
   const [availableTasks, setAvailableTasks] = useState<Request[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,6 +56,8 @@ export default function RepDashboard() {
     rating: 0,
     responseTime: "10min", // Placeholder for now
   });
+  const [historyTasks, setHistoryTasks] = useState<Request[]>([]);
+  const [selectedStat, setSelectedStat] = useState<string | null>(null);
 
   const handleApply = async (taskId: string) => {
     if (!user || applyingId) return;
@@ -90,17 +91,22 @@ export default function RepDashboard() {
       let totalRating = 0;
       let ratedCount = 0;
 
+      const history: Request[] = [];
+
       snapshot.docs.forEach((doc) => {
         const data = doc.data();
-        if (data.status === "closed") {
+        if (data.status === "closed" || data.status === "completed") {
           completed++;
           income += Number(data.budget || 0);
           if (data.rating) {
             totalRating += data.rating;
             ratedCount++;
           }
+          history.push({ id: doc.id, ...data } as Request);
         }
       });
+
+      setHistoryTasks(history);
 
       setStats((prev) => ({
         ...prev,
@@ -125,12 +131,30 @@ export default function RepDashboard() {
         id: doc.id,
         ...doc.data(),
       })) as Request[];
+
+      // Basic Recommendation Logic: Sort by location match if user has an address set
+      if (userData?.address) {
+        const userCity = userData.address.toLowerCase();
+        fetchedTasks.sort((a, b) => {
+          const aMatch =
+            a.location?.city?.toLowerCase() &&
+            userCity.includes(a.location.city.toLowerCase());
+          const bMatch =
+            b.location?.city?.toLowerCase() &&
+            userCity.includes(b.location.city.toLowerCase());
+
+          if (aMatch && !bMatch) return -1;
+          if (!aMatch && bMatch) return 1;
+          return 0;
+        });
+      }
+
       setAvailableTasks(fetchedTasks);
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [userData?.address]);
 
   // Create markers from available tasks
   const markers = availableTasks
@@ -265,7 +289,10 @@ export default function RepDashboard() {
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-              <div className="bg-white dark:bg-[#1a2632] p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+              <div
+                onClick={() => setSelectedStat("income")}
+                className="bg-white dark:bg-[#1a2632] p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all"
+              >
                 <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 text-primary flex items-center justify-center mb-4">
                   <span className="material-symbols-outlined text-2xl">
                     payments
@@ -278,7 +305,10 @@ export default function RepDashboard() {
                   Ingresos totales
                 </p>
               </div>
-              <div className="bg-white dark:bg-[#1a2632] p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+              <div
+                onClick={() => setSelectedStat("completed")}
+                className="bg-white dark:bg-[#1a2632] p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all"
+              >
                 <div className="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/30 text-green-600 flex items-center justify-center mb-4">
                   <span className="material-symbols-outlined text-2xl">
                     assignment_turned_in
@@ -291,7 +321,10 @@ export default function RepDashboard() {
                   Tareas completadas
                 </p>
               </div>
-              <div className="bg-white dark:bg-[#1a2632] p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+              <div
+                onClick={() => setSelectedStat("rating")}
+                className="bg-white dark:bg-[#1a2632] p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all"
+              >
                 <div className="w-12 h-12 rounded-xl bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 flex items-center justify-center mb-4">
                   <span className="material-symbols-outlined text-2xl">
                     star
@@ -304,7 +337,10 @@ export default function RepDashboard() {
                   Calificación promedio
                 </p>
               </div>
-              <div className="bg-white dark:bg-[#1a2632] p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+              <div
+                onClick={() => setSelectedStat("response")}
+                className="bg-white dark:bg-[#1a2632] p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all"
+              >
                 <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 text-purple-600 flex items-center justify-center mb-4">
                   <span className="material-symbols-outlined text-2xl">
                     bolt
@@ -377,15 +413,31 @@ export default function RepDashboard() {
                                 <h5 className="font-bold text-md text-slate-900 dark:text-white mt-0.5">
                                   {task.title}
                                 </h5>
-                                <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
-                                  <span className="material-symbols-outlined text-[10px]">
-                                    location_on
-                                  </span>
-                                  {task.location?.city}{" "}
-                                  {task.location?.address
-                                    ? `• ${task.location.address}`
-                                    : ""}
-                                </p>
+                                <div className="flex flex-wrap items-center gap-2 mt-1">
+                                  <p className="text-xs text-slate-500 flex items-center gap-1">
+                                    <span className="material-symbols-outlined text-[10px]">
+                                      location_on
+                                    </span>
+                                    {task.location?.city}{" "}
+                                    {task.location?.address
+                                      ? `• ${task.location.address}`
+                                      : ""}
+                                  </p>
+                                  {userData?.address &&
+                                    task.location?.city &&
+                                    userData.address
+                                      .toLowerCase()
+                                      .includes(
+                                        task.location.city.toLowerCase(),
+                                      ) && (
+                                      <span className="flex items-center gap-0.5 px-2 py-0.5 bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 rounded-full text-[10px] font-bold animate-pulse">
+                                        <span className="material-symbols-outlined text-[12px]">
+                                          radar
+                                        </span>
+                                        Cerca de ti
+                                      </span>
+                                    )}
+                                </div>
                               </div>
                             </div>
                             <span className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap">
@@ -595,6 +647,151 @@ export default function RepDashboard() {
                   </span>
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Stat Detail Modal */}
+      {selectedStat && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => setSelectedStat(null)}
+        >
+          <div
+            className="bg-white dark:bg-[#1a2632] w-full max-w-lg rounded-3xl shadow-2xl p-6 animate-scale-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                {selectedStat === "income"
+                  ? "Detalle de Ingresos"
+                  : selectedStat === "completed"
+                    ? "Historial de Tareas"
+                    : selectedStat === "rating"
+                      ? "Reseñas"
+                      : "Métricas de Respuesta"}
+              </h3>
+              <button
+                onClick={() => setSelectedStat(null)}
+                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div className="max-h-[60vh] overflow-y-auto space-y-4 pr-2">
+              {selectedStat === "income" && (
+                <>
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl flex justify-between items-center mb-4">
+                    <span className="font-bold text-slate-700 dark:text-slate-300">
+                      Total Acumulado
+                    </span>
+                    <span className="text-2xl font-black text-blue-600 dark:text-blue-400">
+                      ${stats.income}
+                    </span>
+                  </div>
+                  {historyTasks.length > 0 ? (
+                    historyTasks.map((task) => (
+                      <div
+                        key={task.id}
+                        className="flex justify-between items-center py-3 border-b border-slate-100 dark:border-slate-800 last:border-0"
+                      >
+                        <div>
+                          <p className="font-bold text-slate-900 dark:text-white text-sm">
+                            {task.title}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {new Date(
+                              (task.createdAt as any).seconds * 1000,
+                            ).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <span className="font-bold text-green-600 dark:text-green-400">
+                          +${task.budget}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-center text-slate-500 my-8">
+                      No hay ingresos registrados aún.
+                    </p>
+                  )}
+                </>
+              )}
+
+              {selectedStat === "completed" && (
+                <>
+                  <p className="text-sm text-slate-500 mb-4">
+                    Has completado <b>{stats.completed}</b> tareas con éxito.
+                  </p>
+                  {historyTasks.length > 0 ? (
+                    historyTasks.map((task) => (
+                      <div
+                        key={task.id}
+                        className="flex gap-3 items-start py-3 border-b border-slate-100 dark:border-slate-800 last:border-0"
+                      >
+                        <span className="material-symbols-outlined text-green-500 text-lg mt-0.5">
+                          check_circle
+                        </span>
+                        <div>
+                          <p className="font-bold text-slate-900 dark:text-white text-sm">
+                            {task.title}
+                          </p>
+                          <p className="text-xs text-slate-500 line-clamp-1">
+                            {task.description}
+                          </p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-center text-slate-500 my-8">
+                      No hay tareas completadas aún.
+                    </p>
+                  )}
+                </>
+              )}
+
+              {selectedStat === "rating" && (
+                <div className="text-center py-8">
+                  <div className="text-5xl font-black text-yellow-500 mb-2">
+                    {stats.rating.toFixed(1)}
+                  </div>
+                  <div className="flex justify-center gap-1 mb-4">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <span
+                        key={star}
+                        className={`material-symbols-outlined ${star <= Math.round(stats.rating) ? "text-yellow-500 fill" : "text-slate-300"}`}
+                      >
+                        star
+                      </span>
+                    ))}
+                  </div>
+                  <p className="text-slate-500 dark:text-slate-400">
+                    Basado en tus tareas completadas.
+                  </p>
+                </div>
+              )}
+
+              {selectedStat === "response" && (
+                <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+                  <h4 className="font-bold text-slate-900 dark:text-white mb-2">
+                    Tiempo de Respuesta
+                  </h4>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                    Tu tiempo promedio de respuesta es de{" "}
+                    <b>{stats.responseTime}</b>. Mantener un tiempo bajo aumenta
+                    tus posibilidades de ser contratado.
+                  </p>
+                  <div className="h-2 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                    <div className="h-full bg-green-500 w-[85%]"></div>
+                  </div>
+                  <div className="flex justify-between text-xs text-slate-400 mt-1">
+                    <span>Rápido</span>
+                    <span>Lento</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

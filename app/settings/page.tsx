@@ -12,6 +12,12 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("perfil");
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
+  // Professional Info State
+  const [profession, setProfession] = useState("");
+  const [specialization, setSpecialization] = useState("");
+  const [address, setAddress] = useState("");
+  const [schedule, setSchedule] = useState("");
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load user data into state
@@ -19,7 +25,13 @@ export default function SettingsPage() {
     if (user) {
       setName(user.displayName || "");
     }
-  }, [user]);
+    if (userData) {
+      setProfession(userData.profession || "");
+      setSpecialization(userData.specialization || "");
+      setAddress(userData.address || "");
+      setSchedule(userData.schedule || "");
+    }
+  }, [user, userData]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,6 +42,20 @@ export default function SettingsPage() {
       await updateProfile(user, {
         displayName: name,
       });
+
+      // Save professional info to Firestore if role is rep
+      if (userData?.role === "rep") {
+        const { doc, updateDoc } = await import("firebase/firestore");
+        const { db } = await import("@/lib/firebase");
+        await updateDoc(doc(db, "users", user.uid), {
+          profession,
+          specialization,
+          address,
+          schedule,
+          lastUpdated: new Date(),
+        });
+      }
+
       alert("Perfil actualizado correctamente");
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -43,7 +69,6 @@ export default function SettingsPage() {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    // Optimistic UI update (optional, but good for UX) - forcing reload for now is simpler
     try {
       const storageRef = ref(storage, `profile_pictures/${user.uid}`);
       await uploadBytes(storageRef, file);
@@ -53,7 +78,6 @@ export default function SettingsPage() {
       alert(
         "Foto de perfil actualizada. Recarga la página para ver los cambios.",
       );
-      // window.location.reload(); // Hard reload to show new image if Auth context doesn't auto-update immediately
     } catch (error) {
       console.error("Error uploading profile pic:", error);
       alert("Error al subir la imagen");
@@ -62,6 +86,23 @@ export default function SettingsPage() {
 
   const dashboardPath =
     userData?.role === "rep" ? "/dashboard/rep" : "/dashboard/client";
+
+  const menuItems = [
+    { id: "perfil", label: "Mi Perfil", icon: "person" },
+    { id: "seguridad", label: "Seguridad", icon: "lock" },
+    { id: "pagos", label: "Métodos de Pago", icon: "payment" },
+    { id: "notificaciones", label: "Notificaciones", icon: "notifications" },
+    ...(userData?.role === "rep"
+      ? [
+          { id: "info_profesional", label: "Info Profesional", icon: "work" },
+          {
+            id: "verificacion",
+            label: "Verificación",
+            icon: "verified_user",
+          },
+        ]
+      : []),
+  ];
 
   return (
     <div className="bg-background-light dark:bg-background-dark min-h-screen font-sans text-slate-800 dark:text-slate-200">
@@ -80,44 +121,32 @@ export default function SettingsPage() {
         <div className="w-8"></div>
       </nav>
 
-      <main className="max-w-4xl mx-auto p-4 lg:p-8">
-        <div className="bg-white dark:bg-[#1a2632] rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-          <div className="flex border-b border-slate-200 dark:border-slate-700 overflow-x-auto">
-            <button
-              onClick={() => setActiveTab("perfil")}
-              className={`px-6 py-4 text-sm font-semibold whitespace-nowrap transition-colors ${activeTab === "perfil" ? "text-primary border-b-2 border-primary" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}
-            >
-              Mi Perfil
-            </button>
-            <button
-              onClick={() => setActiveTab("seguridad")}
-              className={`px-6 py-4 text-sm font-semibold whitespace-nowrap transition-colors ${activeTab === "seguridad" ? "text-primary border-b-2 border-primary" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}
-            >
-              Seguridad
-            </button>
-            <button
-              onClick={() => setActiveTab("pagos")}
-              className={`px-6 py-4 text-sm font-semibold whitespace-nowrap transition-colors ${activeTab === "pagos" ? "text-primary border-b-2 border-primary" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}
-            >
-              Métodos de Pago
-            </button>
-            <button
-              onClick={() => setActiveTab("notificaciones")}
-              className={`px-6 py-4 text-sm font-semibold whitespace-nowrap transition-colors ${activeTab === "notificaciones" ? "text-primary border-b-2 border-primary" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}
-            >
-              Notificaciones
-            </button>
-            {userData?.role === "rep" && (
-              <button
-                onClick={() => setActiveTab("verificacion")}
-                className={`px-6 py-4 text-sm font-semibold whitespace-nowrap transition-colors ${activeTab === "verificacion" ? "text-primary border-b-2 border-primary" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}
-              >
-                Verificación de Identidad
-              </button>
-            )}
-          </div>
+      <main className="max-w-7xl mx-auto p-4 lg:p-8">
+        <div className="grid lg:grid-cols-[280px_1fr] gap-6">
+          {/* Sidebar Navigation */}
+          <aside className="lg:sticky lg:top-24 lg:self-start">
+            <div className="bg-white dark:bg-[#1a2632] rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-4 space-y-2">
+              {menuItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all ${
+                    activeTab === item.id
+                      ? "bg-primary text-white shadow-md"
+                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-xl">
+                    {item.icon}
+                  </span>
+                  <span className="font-medium text-sm">{item.label}</span>
+                </button>
+              ))}
+            </div>
+          </aside>
 
-          <div className="p-6 lg:p-8">
+          {/* Main Content Area */}
+          <div className="bg-white dark:bg-[#1a2632] rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 lg:p-8">
             {activeTab === "perfil" && (
               <div className="space-y-8 animate-fade-in">
                 <div className="flex flex-col sm:flex-row items-center gap-6 pb-8 border-b border-slate-100 dark:border-slate-800">
@@ -220,17 +249,17 @@ export default function SettingsPage() {
                     <input
                       type="password"
                       placeholder="Contraseña actual"
-                      className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800"
+                      className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2"
                     />
                     <input
                       type="password"
                       placeholder="Nueva contraseña"
-                      className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800"
+                      className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2"
                     />
                     <input
                       type="password"
                       placeholder="Confirmar nueva contraseña"
-                      className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800"
+                      className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2"
                     />
                     <button className="bg-slate-900 text-white px-4 py-2 rounded-lg font-medium hover:bg-slate-800 transition-colors">
                       Actualizar Contraseña
@@ -269,6 +298,18 @@ export default function SettingsPage() {
                 </div>
               </div>
             )}
+
+            {activeTab === "pagos" && (
+              <div className="space-y-8 animate-fade-in">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                  Métodos de Pago
+                </h3>
+                <p className="text-slate-500">
+                  Esta sección estará disponible próximamente.
+                </p>
+              </div>
+            )}
+
             {activeTab === "notificaciones" && (
               <div className="space-y-8 animate-fade-in">
                 <div className="space-y-4">
@@ -471,6 +512,97 @@ export default function SettingsPage() {
                     </p>
                   </div>
                 </div>
+              </div>
+            )}
+            {activeTab === "info_profesional" && userData?.role === "rep" && (
+              <div className="space-y-8 animate-fade-in">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 text-primary flex items-center justify-center">
+                    <span className="material-symbols-outlined text-2xl">
+                      work
+                    </span>
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                      Perfil Profesional
+                    </h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      Completa tu información para recibir mejores propuestas.
+                    </p>
+                  </div>
+                </div>
+
+                <form
+                  onSubmit={handleSave}
+                  className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                >
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      Profesión / Título Principal
+                    </label>
+                    <input
+                      type="text"
+                      value={profession}
+                      onChange={(e) => setProfession(e.target.value)}
+                      placeholder="Ej. Mecánico, Gestor, Abogado..."
+                      className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary px-4 py-2"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      Especialización
+                    </label>
+                    <input
+                      type="text"
+                      value={specialization}
+                      onChange={(e) => setSpecialization(e.target.value)}
+                      placeholder="Ej. Motores Diesel, Divorcios..."
+                      className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary px-4 py-2"
+                    />
+                  </div>
+
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      Zona de Cobertura / Ubicación
+                    </label>
+                    <input
+                      type="text"
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      placeholder="Ej. Palermo, CABA (y alrededores de 5km)"
+                      className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary px-4 py-2"
+                    />
+                    <p className="text-xs text-slate-500">
+                      Esto ayudará a mostrarte tareas cercanas.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      Disponibilidad Horaria
+                    </label>
+                    <textarea
+                      value={schedule}
+                      onChange={(e) => setSchedule(e.target.value)}
+                      rows={3}
+                      placeholder="Ej. Lunes a Viernes de 9 a 18hs. Sábados solo urgencias."
+                      className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary px-4 py-2 resize-none"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2 pt-4">
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="bg-primary text-white px-6 py-2.5 rounded-lg font-bold hover:bg-primary-dark transition-colors shadow-lg shadow-blue-500/20 disabled:opacity-50 w-full md:w-auto"
+                    >
+                      {loading
+                        ? "Guardando..."
+                        : "Guardar Información Profesional"}
+                    </button>
+                  </div>
+                </form>
               </div>
             )}
           </div>

@@ -625,12 +625,20 @@ export default function LandingPage() {
             </button>
             <div className="aspect-video bg-black">
               <video
-                src="/personas-de-confianza/videos/demo.mp4"
+                src="/videos/Personas_de_Confianza.mp4"
                 className="w-full h-full"
                 controls
                 autoPlay
                 muted
                 playsInline
+                preload="metadata"
+                onError={(e) => {
+                  console.error("Error loading video:", e);
+                  console.error(
+                    "Video source:",
+                    "/videos/Personas_de_Confianza.mp4",
+                  );
+                }}
               >
                 Tu navegador no soporta el elemento de video.
               </video>
