@@ -7,6 +7,7 @@ import MobileHeader from "@/components/MobileHeader";
 import { useAuth } from "@/components/AuthProvider";
 import { db, auth } from "@/lib/firebase";
 import NotificationBell from "@/components/NotificationBell";
+import MercadoPagoButton from "@/components/MercadoPagoButton";
 import {
   collection,
   query,
@@ -405,41 +406,72 @@ export default function ClientDashboard() {
                             </span>
                           </div>
 
-                          <div className="flex gap-2 w-full sm:w-auto">
-                            {/* Chat Button (Only if Assigned/In Progress/Completed) */}
-                            {["assigned", "in_progress", "completed"].includes(
-                              req.status,
-                            ) && (
-                              <Link
-                                href={`/dashboard/chat?id=${req.id}`}
-                                className="flex-1 sm:flex-none px-5 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark transition-colors flex items-center justify-center gap-2"
-                              >
-                                <span className="material-symbols-outlined text-[20px]">
-                                  chat
-                                </span>
-                                Chat
-                              </Link>
-                            )}
+                          <div className="flex flex-col gap-3 w-full sm:w-auto">
+                            {/* Payment Button - Solo si está asignado, tiene presupuesto y NO está pagado */}
+                            {req.status === "assigned" &&
+                              req.budget &&
+                              Number(req.budget) > 0 &&
+                              !(req as any).paymentId && (
+                                <div className="w-full">
+                                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-2">
+                                    <p className="text-xs text-blue-700 dark:text-blue-300 flex items-center gap-2">
+                                      <span className="material-symbols-outlined text-sm">
+                                        info
+                                      </span>
+                                      <span>
+                                        Paga para que el representante comience
+                                      </span>
+                                    </p>
+                                  </div>
+                                  <MercadoPagoButton
+                                    requestId={req.id}
+                                    title={req.title}
+                                    amount={Number(req.budget)}
+                                    clientEmail={user?.email || ""}
+                                    clientName={user?.displayName || ""}
+                                    className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
+                                  />
+                                </div>
+                              )}
 
-                            {/* Confirm Completion Button */}
-                            {req.status === "completed" ? (
-                              <button
-                                onClick={() => setRatingTask(req)}
-                                className="flex-1 sm:flex-none px-5 py-2.5 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-green-500/20"
-                              >
-                                <span className="material-symbols-outlined text-[20px]">
-                                  verified
-                                </span>
-                                Confirmar
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => setSelectedRequest(req)}
-                                className="flex-1 sm:flex-none px-5 py-2.5 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-white rounded-lg font-medium hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors"
-                              >
-                                Ver Detalles
-                              </button>
-                            )}
+                            <div className="flex gap-2">
+                              {/* Chat Button (Only if Assigned/In Progress/Completed) */}
+                              {[
+                                "assigned",
+                                "in_progress",
+                                "completed",
+                              ].includes(req.status) && (
+                                <Link
+                                  href={`/dashboard/chat?id=${req.id}`}
+                                  className="flex-1 sm:flex-none px-5 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark transition-colors flex items-center justify-center gap-2"
+                                >
+                                  <span className="material-symbols-outlined text-[20px]">
+                                    chat
+                                  </span>
+                                  Chat
+                                </Link>
+                              )}
+
+                              {/* Confirm Completion Button */}
+                              {req.status === "completed" ? (
+                                <button
+                                  onClick={() => setRatingTask(req)}
+                                  className="flex-1 sm:flex-none px-5 py-2.5 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-green-500/20"
+                                >
+                                  <span className="material-symbols-outlined text-[20px]">
+                                    verified
+                                  </span>
+                                  Confirmar
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => setSelectedRequest(req)}
+                                  className="flex-1 sm:flex-none px-5 py-2.5 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-white rounded-lg font-medium hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors"
+                                >
+                                  Ver Detalles
+                                </button>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
