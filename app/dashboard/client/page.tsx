@@ -34,6 +34,11 @@ interface Request {
     city: string;
     address?: string;
   };
+  paymentId?: string;
+  paymentStatus?: string;
+  paymentMethod?: string;
+  paymentAmount?: number;
+  paidAt?: Timestamp;
 }
 
 export default function ClientDashboard() {
@@ -105,8 +110,13 @@ export default function ClientDashboard() {
         return "text-orange-500";
       case "assigned":
         return "text-blue-500";
+      case "paid":
       case "in_progress":
         return "text-green-500";
+      case "payment_pending":
+        return "text-amber-500";
+      case "payment_failed":
+        return "text-red-500";
       case "completed":
         return "text-purple-600"; // Distinct color for ready-to-close
       case "closed":
@@ -122,6 +132,12 @@ export default function ClientDashboard() {
         return "Buscando Rep";
       case "assigned":
         return "Asignado";
+      case "payment_pending":
+        return "Pago en Proceso";
+      case "payment_failed":
+        return "Pago Rechazado";
+      case "paid":
+        return "Pagado - Esperando Inicio";
       case "in_progress":
         return "En Progreso";
       case "completed":
@@ -411,7 +427,7 @@ export default function ClientDashboard() {
                             {req.status === "assigned" &&
                               req.budget &&
                               Number(req.budget) > 0 &&
-                              !(req as any).paymentId && (
+                              !req.paymentId && (
                                 <div className="w-full">
                                   <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-2">
                                     <p className="text-xs text-blue-700 dark:text-blue-300 flex items-center gap-2">
