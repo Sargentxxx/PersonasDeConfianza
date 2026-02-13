@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+export const dynamic = "force-dynamic";
 import { MercadoPagoConfig, Preference } from "mercadopago";
 
 // Configuración del cliente de Mercado Pago
-const client = new MercadoPagoConfig({
-    accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || "",
-    options: { timeout: 5000 },
-});
-
 export async function POST(request: NextRequest) {
+    const client = new MercadoPagoConfig({
+        accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || "",
+        options: { timeout: 5000 },
+    });
+
     try {
         const body = await request.json();
         const { requestId, title, amount, clientEmail, clientName } = body;
@@ -88,18 +89,19 @@ export async function POST(request: NextRequest) {
             init_point: result.init_point,
             sandbox_init_point: result.sandbox_init_point,
         });
-    } catch (error: any) {
-        console.error("Error creating Mercado Pago preference:", error);
+    } catch (error: unknown) {
+        const err = error as any;
+        console.error("Error creating Mercado Pago preference:", err);
 
         // Intentar extraer la mayor cantidad de información posible del error
         const errorResponse = {
             error: "Error al crear la preferencia de pago",
-            message: error.message || "Error desconocido",
-            cause: error.cause || "No especificada",
-            status: error.status,
-            name: error.name,
+            message: err.message || "Error desconocido",
+            cause: err.cause || "No especificada",
+            status: err.status,
+            name: err.name,
             // Serializar el objeto de error completo si es posible
-            fullError: JSON.parse(JSON.stringify(error, Object.getOwnPropertyNames(error)))
+            fullError: JSON.parse(JSON.stringify(err, Object.getOwnPropertyNames(err)))
         };
 
         return NextResponse.json(

@@ -19,6 +19,7 @@ export default function ExampleClientDashboard() {
     repId: "rep_456",
     repName: "Juan Pérez",
     createdAt: new Date(),
+    paymentId: undefined as string | undefined,
   };
 
   // Verificar si debe mostrar el botón de pago

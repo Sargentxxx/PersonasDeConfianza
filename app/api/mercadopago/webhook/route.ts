@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+export const dynamic = "force-dynamic";
 import { MercadoPagoConfig, Payment } from "mercadopago";
 import { db } from "@/lib/firebase";
 import { doc, updateDoc, serverTimestamp, getDoc } from "firebase/firestore";
 
 // Configuración del cliente de Mercado Pago
-const client = new MercadoPagoConfig({
-    accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || "",
-});
-
 export async function POST(request: NextRequest) {
+    const client = new MercadoPagoConfig({
+        accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || "",
+    });
+
     try {
         const body = await request.json();
 
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
                 );
             }
 
-            const updateData: any = {
+            const updateData: Record<string, any> = {
                 paymentId: paymentId,
                 paymentStatus: paymentData.status,
                 paymentStatusDetail: paymentData.status_detail,
@@ -89,12 +90,13 @@ export async function POST(request: NextRequest) {
 
         // Si no es un webhook de pago, simplemente responder OK
         return NextResponse.json({ received: true });
-    } catch (error: any) {
-        console.error("Error processing webhook:", error);
+    } catch (error: unknown) {
+        const err = error as Error;
+        console.error("Error processing webhook:", err);
         return NextResponse.json(
             {
                 error: "Error processing webhook",
-                details: error.message,
+                details: err.message,
             },
             { status: 500 }
         );
@@ -102,6 +104,6 @@ export async function POST(request: NextRequest) {
 }
 
 // Mercado Pago puede enviar webhooks vía GET también (para validación)
-export async function GET(request: NextRequest) {
+export async function GET() {
     return NextResponse.json({ status: "Webhook endpoint ready" });
 }
