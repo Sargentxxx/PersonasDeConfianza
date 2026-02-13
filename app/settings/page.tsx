@@ -17,6 +17,8 @@ export default function SettingsPage() {
   const [specialization, setSpecialization] = useState("");
   const [address, setAddress] = useState("");
   const [schedule, setSchedule] = useState("");
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [loadingTransactions, setLoadingTransactions] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -32,6 +34,42 @@ export default function SettingsPage() {
       setSchedule(userData.schedule || "");
     }
   }, [user, userData]);
+
+  // Fetch transactions when activeTab changes to "pagos"
+  useEffect(() => {
+    if (activeTab === "pagos" && user) {
+      fetchTransactions();
+    }
+  }, [activeTab, user]);
+
+  const fetchTransactions = async () => {
+    if (!user) return;
+    setLoadingTransactions(true);
+    try {
+      const { collection, query, where, getDocs, orderBy } =
+        await import("firebase/firestore");
+      const { db } = await import("@/lib/firebase");
+
+      const q = query(
+        collection(db, "requests"),
+        where("clientId", "==", user.uid),
+        where("paymentId", "!=", null),
+        orderBy("paymentId"),
+        orderBy("createdAt", "desc"),
+      );
+
+      const querySnapshot = await getDocs(q);
+      const docs = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setTransactions(docs);
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+    } finally {
+      setLoadingTransactions(false);
+    }
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -301,12 +339,125 @@ export default function SettingsPage() {
 
             {activeTab === "pagos" && (
               <div className="space-y-8 animate-fade-in">
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                  Métodos de Pago
-                </h3>
-                <p className="text-slate-500">
-                  Esta sección estará disponible próximamente.
-                </p>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                    Métodos de Pago
+                  </h3>
+                  <img
+                    src="https://logotipous.com/wp-content/uploads/2021/08/mercadopago-logo.png"
+                    alt="Mercado Pago"
+                    className="h-8 object-contain"
+                  />
+                </div>
+
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-6">
+                  <div className="flex gap-4 items-start">
+                    <div className="bg-blue-500 text-white p-2 rounded-lg">
+                      <span className="material-symbols-outlined">
+                        security
+                      </span>
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-blue-900 dark:text-blue-300">
+                        Pagos Seguros y Protegidos
+                      </h4>
+                      <p className="text-sm text-blue-700 dark:text-blue-400 mt-1">
+                        Utilizamos Mercado Pago para procesar todas las
+                        transacciones. Tu información financiera está protegida
+                        y nunca se almacena en nuestros servidores.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-bold text-slate-900 dark:text-white">
+                      Transacciones Recientes
+                    </h4>
+                    <button
+                      onClick={fetchTransactions}
+                      className="text-primary text-xs font-bold hover:underline flex items-center gap-1"
+                    >
+                      <span className="material-symbols-outlined text-xs">
+                        refresh
+                      </span>
+                      Actualizar
+                    </button>
+                  </div>
+
+                  {loadingTransactions ? (
+                    <div className="flex flex-col items-center py-10 gap-3">
+                      <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                      <p className="text-sm text-slate-500">
+                        Cargando historial de pagos...
+                      </p>
+                    </div>
+                  ) : transactions.length > 0 ? (
+                    <div className="space-y-3">
+                      {transactions.map((tx) => (
+                        <div
+                          key={tx.id}
+                          className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700"
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
+                              <span className="material-symbols-outlined">
+                                shopping_cart
+                              </span>
+                            </div>
+                            <div>
+                              <p className="font-bold text-sm text-slate-900 dark:text-white">
+                                {tx.title}
+                              </p>
+                              <p className="text-xs text-slate-500">
+                                {tx.paidAt?.toDate
+                                  ? tx.paidAt.toDate().toLocaleDateString()
+                                  : "Reciente"}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold text-slate-900 dark:text-white">
+                              ${tx.paymentAmount || tx.budget}
+                            </p>
+                            <span className="text-[10px] px-2 py-0.5 bg-green-100 text-green-700 rounded-full font-bold">
+                              {tx.paymentStatus === "approved"
+                                ? "Aprobado"
+                                : tx.paymentStatus || "Pagado"}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700">
+                      <span className="material-symbols-outlined text-4xl text-slate-300 mb-3 block">
+                        receipt_long
+                      </span>
+                      <p className="text-slate-500 dark:text-slate-400 font-medium">
+                        No tienes transacciones registradas aún.
+                      </p>
+                      <Link
+                        href="/dashboard/client"
+                        className="text-primary text-sm font-bold mt-2 inline-block hover:underline"
+                      >
+                        Ir al dashboard para contratar servicios
+                      </Link>
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                  <h4 className="font-bold text-slate-900 dark:text-white mb-2 text-sm">
+                    Gestión de Tarjetas
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Mercado Pago recuerda tus tarjetas guardadas de forma
+                    automática cuando usas el mismo email. Puedes gestionarlas
+                    directamente desde tu cuenta de Mercado Pago.
+                  </p>
+                </div>
               </div>
             )}
 
