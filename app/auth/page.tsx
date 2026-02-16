@@ -155,8 +155,12 @@ export default function AuthPage() {
         return;
       }
       if (err.code === "auth/unauthorized-domain") {
+        const domain =
+          typeof window !== "undefined"
+            ? window.location.hostname
+            : "este dominio";
         setError(
-          "Este dominio no está autorizado en Firebase. Por favor, añade 'sargentxxx.github.io' en la consola de Firebase.",
+          `Este dominio (${domain}) no está autorizado en Firebase. Por favor, añádelo en la Consola de Firebase > Authentication > Settings > Authorized domains.`,
         );
       } else {
         setError(getErrorMessage(err));
