@@ -153,8 +153,6 @@ export default function MyTasksPage() {
               label: "Mensajes",
               href: "/messages",
               icon: "chat",
-              badge: "5",
-              badgeColor: "bg-red-500",
             },
             { label: "Configuración", href: "/settings", icon: "settings" },
           ]}
