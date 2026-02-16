@@ -34,34 +34,44 @@ export default function NewRequestPage() {
 
     try {
       console.log("Geocodificando dirección:", address, city);
-      // 1. Geocode the address using Nominatim (OpenStreetMap)
+      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+      if (!apiKey) {
+        throw new Error("Google Maps API Key no configurada");
+      }
+
+      // 1. Geocode the address using Google Maps Geocoding API
       const query = `${address}, ${city}`;
       let response = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
           query,
-        )}&format=json&limit=1`,
+        )}&key=${apiKey}`,
       );
       let data = await response.json();
 
-      if (!data || data.length === 0) {
+      if (data.status === "ZERO_RESULTS") {
         console.warn(
           "Dirección exacta no encontrada, intentando solo ciudad...",
         );
         // Fallback: Try just the city
         response = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+          `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
             city,
-          )}&format=json&limit=1`,
+          )}&key=${apiKey}`,
         );
         data = await response.json();
       }
 
-      if (data && data.length > 0) {
-        lat = parseFloat(data[0].lat);
-        lng = parseFloat(data[0].lon);
+      if (data.status === "OK" && data.results.length > 0) {
+        const location = data.results[0].geometry.location;
+        lat = location.lat;
+        lng = location.lng;
         console.log("Coordenadas encontradas:", lat, lng);
       } else {
-        console.warn("No se encontraron coordenadas para esta ubicación.");
+        console.warn(
+          "No se encontraron coordenadas para esta ubicación.",
+          data.status,
+        );
       }
     } catch (error) {
       console.error("Error geocoding address:", error);
