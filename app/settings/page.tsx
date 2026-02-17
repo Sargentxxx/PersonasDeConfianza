@@ -243,6 +243,72 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
+                {/* Role Switcher (Self-Correction) */}
+                <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 mb-8 animate-fade-in">
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div>
+                      <h3 className="font-bold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
+                        <span className="material-symbols-outlined text-primary">
+                          manage_accounts
+                        </span>
+                        Tipo de Cuenta
+                      </h3>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">
+                        Tu rol actual es:{" "}
+                        <strong className="uppercase">
+                          {userData?.role === "rep"
+                            ? "Representante"
+                            : "Cliente"}
+                        </strong>
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!user) return;
+                        const currentRole =
+                          userData?.role === "rep" ? "rep" : "client";
+                        const newRole =
+                          currentRole === "rep" ? "client" : "rep";
+
+                        if (
+                          !confirm(
+                            `¿Estás seguro de cambiar tu cuenta a modo ${newRole === "rep" ? "REPRESENTANTE" : "CLIENTE"}?`,
+                          )
+                        )
+                          return;
+
+                        setLoading(true);
+                        try {
+                          const { doc, updateDoc } =
+                            await import("firebase/firestore");
+                          const { db } = await import("@/lib/firebase");
+                          await updateDoc(doc(db, "users", user.uid), {
+                            role: newRole,
+                          });
+                          alert(
+                            `Tu cuenta ha sido actualizada a modo ${newRole === "rep" ? "REPRESENTANTE" : "CLIENTE"}. Recargando...`,
+                          );
+                          window.location.reload();
+                        } catch (err) {
+                          console.error(err);
+                          alert("Error al actualizar el rol.");
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                      className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors shadow-sm ${
+                        userData?.role === "rep"
+                          ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                          : "bg-green-100 text-green-700 hover:bg-green-200"
+                      }`}
+                    >
+                      Cambiar a{" "}
+                      {userData?.role === "rep" ? "Cliente" : "Representante"}
+                    </button>
+                  </div>
+                </div>
+
                 <form
                   onSubmit={handleSave}
                   className="grid grid-cols-1 md:grid-cols-2 gap-6"

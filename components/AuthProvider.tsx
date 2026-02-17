@@ -148,7 +148,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // BUT allow shared routes for all users
     if (isDashboardRoute && !isAllowedPath && !isSharedRoute) {
       console.log(
-        `⚠️ Usuario con rol "${userRole}" intenta acceder a "${normalizedPath}". Redirigiendo...`,
+        `AuthProvider: ⚠️ Redirección Forzada.`,
+        `\n  - Rol Actual: "${userRole}"`,
+        `\n  - Ruta Intentada: "${normalizedPath}"`,
+        `\n  - Rutas Permitidas: ${JSON.stringify(allowedPaths)}`,
       );
 
       // Redirect to correct dashboard based on role
