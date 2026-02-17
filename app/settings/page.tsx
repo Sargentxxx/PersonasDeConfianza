@@ -20,6 +20,12 @@ export default function SettingsPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
 
+  // Financial Info State (Rep only)
+  const [cbu, setCbu] = useState("");
+  const [alias, setAlias] = useState("");
+  const [bankName, setBankName] = useState("");
+  const [accountHolder, setAccountHolder] = useState("");
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load user data into state
@@ -31,7 +37,14 @@ export default function SettingsPage() {
       setProfession(userData.profession || "");
       setSpecialization(userData.specialization || "");
       setAddress(userData.address || "");
+      setAddress(userData.address || "");
       setSchedule(userData.schedule || "");
+      if ((userData as any).financialInfo) {
+        setCbu((userData as any).financialInfo.cbu || "");
+        setAlias((userData as any).financialInfo.alias || "");
+        setBankName((userData as any).financialInfo.bankName || "");
+        setAccountHolder((userData as any).financialInfo.accountHolder || "");
+      }
     }
   }, [user, userData]);
 
@@ -90,6 +103,12 @@ export default function SettingsPage() {
           specialization,
           address,
           schedule,
+          financialInfo: {
+            cbu,
+            alias,
+            bankName,
+            accountHolder,
+          },
           lastUpdated: new Date(),
         });
       }
@@ -458,6 +477,81 @@ export default function SettingsPage() {
                     directamente desde tu cuenta de Mercado Pago.
                   </p>
                 </div>
+
+                {userData?.role === "rep" && (
+                  <div className="pt-4 border-t border-slate-100 dark:border-slate-800 animate-fade-in">
+                    <h4 className="font-bold text-slate-900 dark:text-white mb-4 text-lg">
+                      Datos Bancarios (Para Cobros)
+                    </h4>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+                      Ingresa tu CBU o Alias para recibir los pagos de tus
+                      servicios completados.
+                    </p>
+
+                    <form
+                      onSubmit={handleSave}
+                      className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-800"
+                    >
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                          CBU / CVU
+                        </label>
+                        <input
+                          type="text"
+                          value={cbu}
+                          onChange={(e) => setCbu(e.target.value)}
+                          placeholder="0000000000000000000000"
+                          className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary px-4 py-2"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                          Alias
+                        </label>
+                        <input
+                          type="text"
+                          value={alias}
+                          onChange={(e) => setAlias(e.target.value)}
+                          placeholder="mi.alias.banco"
+                          className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary px-4 py-2"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                          Banco / Billetera
+                        </label>
+                        <input
+                          type="text"
+                          value={bankName}
+                          onChange={(e) => setBankName(e.target.value)}
+                          placeholder="Ej. Banco Galicia, Mercado Pago..."
+                          className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary px-4 py-2"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                          Titular de la Cuenta
+                        </label>
+                        <input
+                          type="text"
+                          value={accountHolder}
+                          onChange={(e) => setAccountHolder(e.target.value)}
+                          placeholder="Nombre completo del titular"
+                          className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary px-4 py-2"
+                        />
+                      </div>
+                      <div className="md:col-span-2 pt-2">
+                        <button
+                          type="submit"
+                          disabled={loading}
+                          className="w-full md:w-auto bg-primary text-white px-6 py-2.5 rounded-lg font-bold hover:bg-primary-dark transition-colors shadow-lg shadow-blue-500/20 disabled:opacity-50"
+                        >
+                          {loading ? "Guardando..." : "Guardar Datos Bancarios"}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
               </div>
             )}
 

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 export default function LandingPage() {
@@ -61,10 +62,12 @@ export default function LandingPage() {
       <header className="relative min-h-[90vh] flex items-center justify-center overflow-hidden pt-32">
         {/* Background Image */}
         <div className="absolute inset-0 z-0">
-          <img
+          <Image
             src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?ixlib=rb-4.0.3&auto=format&fit=crop&w=2069&q=80"
             alt="Amigos conversando y sonriendo"
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
+            priority
           />
           <div className="absolute inset-0 bg-gradient-to-r from-slate-900/90 via-slate-900/60 to-transparent"></div>
         </div>
@@ -75,16 +78,19 @@ export default function LandingPage() {
               ✨ Confianza y Seguridad Garantizada
             </div>
             <h1 className="text-5xl md:text-7xl font-extrabold text-white tracking-tight leading-tight mb-6">
-              Tu tranquilidad es{" "}
+              La confianza que{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
-                nuestra prioridad
+                acorta distancias
               </span>
             </h1>
-            <p className="text-xl text-slate-200 leading-relaxed mb-10 max-w-xl">
-              Conectamos a personas que necesitan ayuda con profesionales de
-              confianza verificados. Una comunidad segura para resolver tus
-              tareas diarias.
+            <p className="text-xl text-slate-200 leading-relaxed mb-8 max-w-xl">
+              Tu representante local para verificar, gestionar y resolver
+              trámites donde tú no puedes estar.
             </p>
+            <blockquote className="border-l-4 border-emerald-400 pl-4 mb-10 italic text-slate-300">
+              &quot;Gracias a Juan pude comprar el auto en Córdoba sin viajar.
+              Verificó todo por mí.&quot;
+            </blockquote>
 
             <div className="flex flex-col sm:flex-row gap-4">
               <Link
@@ -114,10 +120,11 @@ export default function LandingPage() {
               className="group relative h-[500px] rounded-3xl overflow-hidden shadow-2xl transition-all hover:scale-[1.02]"
             >
               <div className="absolute inset-0">
-                <img
+                <Image
                   src="https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1080&q=80"
                   alt="Persona relajada"
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  fill
+                  className="object-cover transition-transform duration-700 group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/40 to-transparent"></div>
               </div>
@@ -149,10 +156,11 @@ export default function LandingPage() {
               className="group relative h-[500px] rounded-3xl overflow-hidden shadow-2xl transition-all hover:scale-[1.02]"
             >
               <div className="absolute inset-0">
-                <img
+                <Image
                   src="https://images.unsplash.com/photo-1542744173-8e7e53415bb0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1080&q=80"
                   alt="Profesional trabajando"
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  fill
+                  className="object-cover transition-transform duration-700 group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/40 to-transparent"></div>
               </div>
@@ -181,83 +189,127 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* How it works - Simplified for Seniors */}
-      <section id="como-funciona" className="py-24 bg-white dark:bg-[#1a2632]">
+      {/* Problem & Solution - Value Proposition */}
+      <section className="py-20 bg-white dark:bg-[#1a2632]">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-slate-900 dark:text-white mb-6">
-              Tan simple como 1, 2, 3
+            <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-6">
+              Llenamos el vacío de los servicios tradicionales
             </h2>
             <p className="text-xl text-slate-500 dark:text-slate-400 max-w-3xl mx-auto">
-              Hemos diseñado nuestra plataforma pensando en ti. Sin
-              complicaciones tecnológicas.
+              Las apps actuales son rígidas. Nosotros resolvemos la
+              incertidumbre de la distancia con flexibilidad humana.
             </p>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Explainer Video Placeholder */}
-            <div
-              className="relative rounded-3xl overflow-hidden shadow-2xl aspect-video bg-slate-900 group cursor-pointer"
-              onClick={() => setShowVideo(true)}
-            >
-              <img
-                src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=1740&q=80"
-                alt="Video explicativo"
-                className="w-full h-full object-cover opacity-60 transition-opacity group-hover:opacity-40"
-              />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                  <span className="material-symbols-outlined text-primary text-4xl ml-2">
-                    play_arrow
-                  </span>
-                </div>
-              </div>
-              <div className="absolute bottom-6 left-6 right-6">
-                <p className="text-white font-medium text-lg text-center">
-                  Ver video: Cómo funciona PersonasDeConfianza
-                </p>
-              </div>
+          <div className="grid md:grid-cols-2 gap-12">
+            <div className="bg-slate-50 dark:bg-slate-800 p-8 rounded-3xl border border-slate-200 dark:border-slate-700">
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                <span className="material-symbols-outlined text-red-500">
+                  cancel
+                </span>
+                Mercado Tradicional (Rígido)
+              </h3>
+              <p className="text-slate-600 dark:text-slate-400">
+                Si necesitas verificar una moto, no puedes llamar a un plomero
+                ni a un servicio de limpieza. El mercado está fragmentado y no
+                ofrece soluciones para necesidades específicas y puntuales.
+              </p>
             </div>
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-8 rounded-3xl border border-blue-200 dark:border-blue-800 relative overflow-hidden">
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                <span className="material-symbols-outlined text-emerald-500">
+                  check_circle
+                </span>
+                Personas de Confianza (Flexible)
+              </h3>
+              <p className="text-slate-600 dark:text-slate-300">
+                Una red de personas verificadas dispuestas a realizar tareas
+                personalizadas que requieren criterio, honestidad y confianza.
+                Desde verificar un inmueble hasta un trámite personal.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
 
-            {/* Steps */}
-            <div className="space-y-8">
-              {[
-                {
-                  step: "1",
-                  title: "Dinos qué necesitas",
-                  desc: "Escribe brevemente qué ayuda necesitas. Puede ser desde arreglar algo en casa hasta ayuda con un trámite.",
-                  icon: "edit_note",
-                },
-                {
-                  step: "2",
-                  title: "Te asignamos a alguien de confianza",
-                  desc: "Buscamos al mejor profesional verificado para tu tarea. Te avisaremos quién es y cuándo irá.",
-                  icon: "person_check",
-                },
-                {
-                  step: "3",
-                  title: "¡Listo! Problema resuelto",
-                  desc: "El profesional realiza el trabajo. Solo pagas cuando estás conforme con el resultado.",
-                  icon: "verified",
-                },
-              ].map((item, idx) => (
-                <div key={idx} className="flex gap-6">
-                  <div className="flex-shrink-0">
-                    <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xl">
-                      {item.step}
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
-                      {item.title}
-                    </h3>
-                    <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-lg">
-                      {item.desc}
-                    </p>
-                  </div>
+      {/* Use Cases Section */}
+      <section id="use-cases" className="py-24 bg-slate-50 dark:bg-slate-900">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-slate-900 dark:text-white mb-6">
+              La distancia es un problema real y costoso
+            </h2>
+            <p className="text-xl text-slate-500 dark:text-slate-400 max-w-3xl mx-auto">
+              A veces necesitas ojos y manos en otro lugar, pero viajar no es
+              una opción viable.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                title: "Compra de Vehículos",
+                desc: "¿Vas a comprar un auto usado en otra ciudad? Evita estafas verificando su estado mecánico y legal antes de pagar.",
+                icon: "directions_car",
+                action: "Verificar auto",
+                image:
+                  "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+              },
+              {
+                title: "Alquileres Temporales",
+                desc: "¿Esa casa de vacaciones existe realmente? Envía a alguien de confianza a confirmar que las fotos coinciden con la realidad.",
+                icon: "cottage",
+                action: "Revisar propiedad",
+                image:
+                  "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+              },
+              {
+                title: "Trámites Burocráticos",
+                desc: "Legalizaciones, presentaciones en mesa de entradas o recogida de documentos en instituciones públicas.",
+                icon: "description",
+                action: "Gestionar trámite",
+                image:
+                  "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+              },
+            ].map((item, idx) => (
+              <div
+                key={idx}
+                className="group bg-white dark:bg-slate-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100 dark:border-slate-700 flex flex-col"
+              >
+                <div className="h-48 overflow-hidden relative">
+                  <div className="absolute inset-0 bg-slate-900/10 group-hover:bg-transparent transition-colors z-10"></div>
+                  <Image
+                    src={item.image}
+                    alt={item.title}
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
                 </div>
-              ))}
-            </div>
+                <div className="p-8 flex flex-col flex-1">
+                  <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mb-6">
+                    <span className="material-symbols-outlined text-2xl">
+                      {item.icon}
+                    </span>
+                  </div>
+                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
+                    {item.title}
+                  </h3>
+                  <p className="text-slate-600 dark:text-slate-400 mb-6 flex-1">
+                    {item.desc}
+                  </p>
+                  <Link
+                    href="/auth?mode=signup"
+                    className="inline-flex items-center text-primary font-bold hover:underline"
+                  >
+                    {item.action}
+                    <span className="material-symbols-outlined ml-2 text-sm">
+                      arrow_forward
+                    </span>
+                  </Link>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -436,63 +488,69 @@ export default function LandingPage() {
       </section>
 
       {/* Why Choose Us */}
-      <section className="py-24 bg-slate-50 dark:bg-slate-900">
+      {/* Trust Pillars */}
+      <section className="py-24 bg-white dark:bg-[#1a2632]">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">
-              ¿Por qué somos diferentes?
+              ¿Cómo construimos confianza?
             </h2>
-            <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">
-              Tu seguridad no es negociable.
+            <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto text-lg">
+              Sabemos que delegar tareas importantes requiere garantías. Por eso
+              hemos diseñado un sistema de 3 pilares.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid md:grid-cols-3 gap-8">
             {[
               {
-                icon: "verified_user",
-                title: "Verificación Total",
-                desc: "Entrevistamos personalmente a cada representante.",
+                icon: "fingerprint",
+                title: "Identidad Verificada",
+                desc: "Cada 'Persona de Confianza' pasa por un riguroso proceso de validación de identidad con DNI, biometría y antecedentes.",
                 color: "bg-blue-500",
               },
               {
-                icon: "support_agent",
-                title: "Atención Humana",
-                desc: "¿Dudas? Llámanos. Hablarás con una persona, no un robot.",
+                icon: "stars",
+                title: "Reseñas de la Comunidad",
+                desc: "Sistema de reputación transparente. Lee las experiencias de otros usuarios antes de contratar a tu representante.",
                 color: "bg-yellow-500",
               },
               {
-                icon: "lock",
+                icon: "lock_person",
                 title: "Pagos Protegidos",
-                desc: "Tu dinero está seguro hasta que el trabajo se complete.",
+                desc: "Tu dinero se mantiene seguro en custodia hasta que el servicio se haya completado satisfactoriamente.",
                 color: "bg-emerald-500",
               },
-              {
-                icon: "thumb_up",
-                title: "Garantía de Satisfacción",
-                desc: "Si no quedas conforme, lo solucionamos.",
-                color: "bg-purple-500",
-              },
-            ].map((benefit, idx) => (
+            ].map((pillar, idx) => (
               <div
                 key={idx}
-                className="group p-8 rounded-3xl bg-white dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 hover:shadow-xl hover:-translate-y-2 transition-all duration-300"
+                className="group p-8 rounded-3xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 hover:shadow-xl hover:-translate-y-2 transition-all duration-300 text-center"
               >
                 <div
-                  className={`w-14 h-14 ${benefit.color} text-white rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}
+                  className={`w-16 h-16 ${pillar.color} text-white rounded-2xl flex items-center justify-center mb-6 mx-auto group-hover:scale-110 transition-transform shadow-lg`}
                 >
-                  <span className="material-symbols-outlined text-3xl">
-                    {benefit.icon}
+                  <span className="material-symbols-outlined text-4xl">
+                    {pillar.icon}
                   </span>
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">
-                  {benefit.title}
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
+                  {pillar.title}
                 </h3>
                 <p className="text-slate-500 dark:text-slate-400 leading-relaxed">
-                  {benefit.desc}
+                  {pillar.desc}
                 </p>
               </div>
             ))}
+          </div>
+
+          <div className="mt-16 text-center">
+            <Link
+              href="/auth?mode=signup"
+              className="inline-flex px-8 py-4 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-lg hover:bg-slate-800 dark:hover:bg-slate-100 shadow-xl transition-all transform hover:-translate-y-1 items-center gap-2"
+            >
+              Empezar ahora
+              <span className="material-symbols-outlined">arrow_forward</span>
+            </Link>
           </div>
         </div>
       </section>
