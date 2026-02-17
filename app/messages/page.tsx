@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { db } from "@/lib/firebase";
@@ -267,8 +268,8 @@ export default function MessagesPage() {
                   }}
                   className={`p-4 border-b border-slate-100 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${
                     activeChat === conv.id
-                      ? "bg-blue-50 dark:bg-blue-900/10 border-l-4 border-l-primary"
-                      : ""
+                      ? "bg-blue-50 dark:bg-blue-900/20 border-l-4 border-l-primary"
+                      : "border-l-4 border-l-transparent"
                   }`}
                 >
                   <div className="flex gap-3">
@@ -382,17 +383,19 @@ export default function MessagesPage() {
                         </div>
                         <div>
                           <div
-                            className={`p-3 rounded-2xl shadow-sm ${
+                            className={`p-3 px-4 rounded-2xl shadow-sm max-w-full break-words ${
                               isMe
-                                ? "bg-primary text-white rounded-tr-none shadow-blue-500/20"
+                                ? "bg-gradient-to-br from-primary to-blue-600 text-white rounded-tr-none shadow-blue-500/20"
                                 : "bg-white dark:bg-[#1a2632] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-tl-none"
                             }`}
                           >
                             {msg.imageUrl && (
-                              <img
+                              <Image
                                 src={msg.imageUrl}
                                 alt="Adjunto"
-                                className="w-full h-auto rounded-lg mb-2 max-w-[200px] object-cover"
+                                width={200}
+                                height={200}
+                                className="w-full h-auto rounded-lg mb-2 object-cover"
                               />
                             )}
                             {msg.text && <p className="text-sm">{msg.text}</p>}
@@ -422,10 +425,10 @@ export default function MessagesPage() {
               </div>
 
               {/* Input Area */}
-              <div className="p-4 bg-white dark:bg-[#1a2632] border-t border-slate-200 dark:border-slate-700">
+              <div className="p-4 bg-white dark:bg-[#1a2632] border-t border-slate-200 dark:border-slate-700 pb-safe">
                 <form
                   onSubmit={handleSendMessage}
-                  className="flex gap-2 items-center"
+                  className="flex gap-2 items-center max-w-4xl mx-auto"
                 >
                   <input
                     type="file"
@@ -438,7 +441,7 @@ export default function MessagesPage() {
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={uploading}
-                    className="p-2 text-slate-400 hover:text-primary transition-colors disabled:opacity-50"
+                    className="p-3 text-slate-400 hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all disabled:opacity-50"
                   >
                     {uploading ? (
                       <span className="w-5 h-5 border-2 border-slate-300 border-t-primary rounded-full animate-spin block"></span>
@@ -454,13 +457,13 @@ export default function MessagesPage() {
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
                       placeholder="Escribe un mensaje..."
-                      className="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-xl py-3 pl-4 pr-10 focus:ring-2 focus:ring-primary"
+                      className="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-full py-3.5 pl-6 pr-10 focus:ring-2 focus:ring-primary/50 transition-all shadow-inner"
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={!newMessage.trim()}
-                    className="p-3 bg-primary text-white rounded-xl hover:bg-primary-dark transition-colors shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="p-3.5 bg-primary text-white rounded-full hover:bg-primary-dark transition-all shadow-lg shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-95"
                   >
                     <span className="material-symbols-outlined">send</span>
                   </button>
