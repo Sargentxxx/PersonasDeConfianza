@@ -466,12 +466,13 @@ export default function AuthPage() {
             </div>
 
             {/* Social Auth */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <button
                 type="button"
                 onClick={handleGoogleLogin}
                 disabled={isLoading}
-                className="flex items-center justify-center gap-3 px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors group disabled:opacity-50"
+                className="flex items-center justify-center p-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors group disabled:opacity-50"
+                title="Google"
               >
                 <svg className="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24">
                   <path
@@ -491,19 +492,39 @@ export default function AuthPage() {
                     fill="#EA4335"
                   />
                 </svg>
-                <span className="text-sm font-medium text-slate-700 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-white">
-                  Google
+              </button>
+              <button
+                type="button"
+                className="flex items-center justify-center p-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors group"
+                title="Apple"
+              >
+                <span className="material-symbols-outlined text-xl text-slate-900 dark:text-white">
+                  apple
                 </span>
               </button>
-              <button className="flex items-center justify-center gap-3 px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors group">
+              <button
+                type="button"
+                className="flex items-center justify-center p-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors group"
+                title="Microsoft"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 23 23">
+                  <path fill="#f3f3f3" d="M0 0h23v23H0z" />
+                  <path fill="#f35325" d="M1 1h10v10H1z" />
+                  <path fill="#81bc06" d="M12 1h10v10H12z" />
+                  <path fill="#05a6f0" d="M1 12h10v10H1z" />
+                  <path fill="#ffba08" d="M12 12h10v10H12z" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                className="flex items-center justify-center p-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors group"
+                title="LinkedIn"
+              >
                 <img
                   src="https://lh3.googleusercontent.com/aida-public/AB6AXuDTEB0T0uxdGoDRU6YFSNCNF7Vm5En4xNQARj57AcTS102VcJ8YNoz8xDrEShJKAqoWU6KNUk7Mm0qv2awtDCiEdlPfqSuEUwXqbz51Y-tBI8b1jnK7oc3GBBRmtSumg1bCSJjWXbCX6ZqcH39LbN3NB56z6y7dbNwi1FVAc9P1Vx7YiRx-Ew6357iw5o8uWPthgIbhayDmZDtyUFqt46A-JzBPHpwX2GtL-jIgLn-1fHRxDuY_22e1G6xXtmNJYP_3ohjN56Oarw"
                   alt="LinkedIn Logo"
                   className="h-5 w-5"
                 />
-                <span className="text-sm font-medium text-slate-700 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-white">
-                  LinkedIn
-                </span>
               </button>
             </div>
 
