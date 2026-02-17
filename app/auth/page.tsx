@@ -159,8 +159,11 @@ export default function AuthPage() {
           typeof window !== "undefined"
             ? window.location.hostname
             : "este dominio";
+        console.error(
+          `ERROR TÉCNICO: El dominio ${domain} no está autorizado en Firebase Console.`,
+        );
         setError(
-          `Este dominio (${domain}) no está autorizado en Firebase. Por favor, añádelo en la Consola de Firebase > Authentication > Settings > Authorized domains.`,
+          "Lo sentimos, el servicio de autenticación no está disponible temporalmente en este dominio. Por favor, intenta desde el dominio principal o contacta con el administrador.",
         );
       } else {
         setError(getErrorMessage(err));
