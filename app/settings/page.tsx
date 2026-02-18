@@ -433,7 +433,7 @@ export default function SettingsPage() {
                   </h3>
                   <div className="bg-[#009EE3] px-3 py-1.5 rounded-lg flex items-center justify-center shadow-sm">
                     <img
-                      src="https://http2.mlstatic.com/frontend-assets/ml-web-navigation/ui-navigation/5.21.22/mercadopago/logo__large.png"
+                      src="https://upload.wikimedia.org/wikipedia/commons/2/29/MercadoPago_Logo.png"
                       alt="Mercado Pago"
                       className="h-5 w-auto brightness-0 invert"
                     />

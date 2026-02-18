@@ -62,9 +62,13 @@ export default function MercadoPagoButton({
 
       // Redirigir al usuario a Mercado Pago
       window.location.href = paymentUrl;
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error creating payment:", err);
-      setError(err.message || "Error al procesar el pago");
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Error al procesar el pago");
+      }
     } finally {
       setLoading(false);
     }
@@ -87,7 +91,7 @@ export default function MercadoPagoButton({
         ) : (
           <div className="flex items-center gap-2">
             <img
-              src="https://http2.mlstatic.com/frontend-assets/ml-web-navigation/ui-navigation/5.21.22/mercadopago/logo__large.png"
+              src="https://upload.wikimedia.org/wikipedia/commons/2/29/MercadoPago_Logo.png"
               alt="Mercado Pago"
               className="h-4 w-auto brightness-0 invert"
             />
