@@ -425,14 +425,19 @@ export default function SettingsPage() {
             {activeTab === "pagos" && (
               <div className="space-y-8 animate-fade-in">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span className="material-symbols-outlined text-primary">
+                      payments
+                    </span>
                     Métodos de Pago
                   </h3>
-                  <img
-                    src="https://logotipous.com/wp-content/uploads/2021/08/mercadopago-logo.png"
-                    alt="Mercado Pago"
-                    className="h-8 object-contain"
-                  />
+                  <div className="bg-[#009EE3] px-3 py-1.5 rounded-lg flex items-center justify-center shadow-sm">
+                    <img
+                      src="https://http2.mlstatic.com/frontend-assets/ml-web-navigation/ui-navigation/5.21.22/mercadopago/logo__large.png"
+                      alt="Mercado Pago"
+                      className="h-5 w-auto brightness-0 invert"
+                    />
+                  </div>
                 </div>
 
                 <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-6">

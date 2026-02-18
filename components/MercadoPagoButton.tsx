@@ -86,14 +86,11 @@ export default function MercadoPagoButton({
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <svg
-              className="w-5 h-5"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path d="M3 4h18v2H3V4zm0 6h18v2H3v-2zm0 6h18v2H3v-2z" />
-            </svg>
+            <img
+              src="https://http2.mlstatic.com/frontend-assets/ml-web-navigation/ui-navigation/5.21.22/mercadopago/logo__large.png"
+              alt="Mercado Pago"
+              className="h-4 w-auto brightness-0 invert"
+            />
             <span>Pagar con Mercado Pago</span>
           </div>
         )}
