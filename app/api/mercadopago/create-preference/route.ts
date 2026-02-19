@@ -1,6 +1,39 @@
 import { NextRequest, NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 import { MercadoPagoConfig, Preference } from "mercadopago";
+import { initializeApp, getApps, getApp } from "firebase/app";
+import { getFirestore, doc, getDoc } from "firebase/firestore";
+
+// Initialize Firebase client SDK (safe to call in server context)
+const firebaseConfig = {
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+};
+const firebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const db = getFirestore(firebaseApp);
+
+/**
+ * Fetches the commission rate from Firestore config.
+ * Falls back to 15% if not configured.
+ */
+async function getCommissionRate(): Promise<number> {
+    try {
+        const configDoc = await getDoc(doc(db, "config", "platform"));
+        if (configDoc.exists()) {
+            const rate = configDoc.data().commissionRate;
+            if (typeof rate === "number" && rate > 0 && rate <= 100) {
+                return rate;
+            }
+        }
+    } catch (err) {
+        console.error("Error fetching commission rate, using default 15%:", err);
+    }
+    return 15; // default fallback
+}
 
 // Configuración del cliente de Mercado Pago
 export async function POST(request: NextRequest) {
@@ -16,16 +49,10 @@ export async function POST(request: NextRequest) {
         // Logging para depuración
         console.log("=== MERCADOPAGO CREATE PREFERENCE ===");
         console.log("Body recibido:", JSON.stringify(body, null, 2));
-        console.log("requestId:", requestId);
-        console.log("title:", title);
-        console.log("amount:", amount);
-        console.log("clientEmail:", clientEmail);
-        console.log("clientName:", clientName);
 
         // Validación de datos
         if (!requestId || !title || !amount || !clientEmail) {
-            console.error("Validación fallida - Datos faltantes:");
-            console.error({
+            console.error("Validación fallida - Datos faltantes:", {
                 requestId: !!requestId,
                 title: !!title,
                 amount: !!amount,
@@ -37,13 +64,17 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Definir URL base asegurando que no sea undefined
-        // En producción, asegúrate de configurar NEXT_PUBLIC_APP_URL con https://tudominio.com
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+        // Fetch dynamic commission rate from Firestore
+        const commissionRate = await getCommissionRate();
+        const commissionAmount = Number(amount) * (commissionRate / 100);
+        const repAmount = Number(amount) - commissionAmount;
 
+        console.log(`Comisión: ${commissionRate}% → $${commissionAmount.toFixed(2)} (plataforma) / $${repAmount.toFixed(2)} (rep)`);
+
+        // Definir URL base
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
         console.log("URL Base utilizada:", baseUrl);
 
-        // Crear preferencia de pago
         const preference = new Preference(client);
 
         const backUrls = {
@@ -53,9 +84,6 @@ export async function POST(request: NextRequest) {
         };
 
         const notificationUrl = `${baseUrl}/api/mercadopago/webhook`;
-
-        console.log("Back URLs:", backUrls);
-        console.log("Notification URL:", notificationUrl);
 
         const preferenceData = {
             items: [
@@ -79,6 +107,9 @@ export async function POST(request: NextRequest) {
             notification_url: notificationUrl,
             metadata: {
                 request_id: requestId,
+                commission_rate: commissionRate,
+                commission_amount: commissionAmount,
+                rep_amount: repAmount,
             },
         };
 
@@ -88,19 +119,19 @@ export async function POST(request: NextRequest) {
             id: result.id,
             init_point: result.init_point,
             sandbox_init_point: result.sandbox_init_point,
+            commission_rate: commissionRate,
+            commission_amount: commissionAmount,
         });
     } catch (error: unknown) {
-        const err = error as any;
+        const err = error as Record<string, unknown>;
         console.error("Error creating Mercado Pago preference:", err);
 
-        // Intentar extraer la mayor cantidad de información posible del error
         const errorResponse = {
             error: "Error al crear la preferencia de pago",
-            message: err.message || "Error desconocido",
+            message: (err.message as string) || "Error desconocido",
             cause: err.cause || "No especificada",
             status: err.status,
             name: err.name,
-            // Serializar el objeto de error completo si es posible
             fullError: JSON.parse(JSON.stringify(err, Object.getOwnPropertyNames(err)))
         };
 
