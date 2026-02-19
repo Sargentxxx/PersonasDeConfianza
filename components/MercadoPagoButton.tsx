@@ -90,12 +90,12 @@ export default function MercadoPagoButton({
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <img
-              src="https://upload.wikimedia.org/wikipedia/commons/2/29/MercadoPago_Logo.png"
-              alt="Mercado Pago"
-              className="h-4 w-auto brightness-0 invert"
-            />
-            <span>Pagar con Mercado Pago</span>
+            <span className="text-[#009EE3] font-black tracking-tight">
+              Mercado
+            </span>
+            <span className="bg-[#009EE3] text-white font-black px-1 rounded tracking-tight">
+              Pago
+            </span>
           </div>
         )}
       </button>
