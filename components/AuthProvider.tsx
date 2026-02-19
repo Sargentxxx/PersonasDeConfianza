@@ -7,7 +7,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 
 interface UserData {
-  role: "client" | "rep" | string;
+  role: "client" | "rep" | "admin" | string;
   address?: string;
   profession?: string;
   specialization?: string;

@@ -78,6 +78,9 @@ export default function AdminDashboard() {
   const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
   const [selectedUser, setSelectedUser] = useState<PDCUser | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [commissionRate, setCommissionRate] = useState<number>(15);
+  const [editingCommission, setEditingCommission] = useState(false);
+  const [tempCommission, setTempCommission] = useState<number>(15);
 
   const downloadCSV = (data: any[], filename: string) => {
     if (!data.length) return;
@@ -363,7 +366,7 @@ export default function AdminDashboard() {
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${activeTab === "commissions" ? "bg-blue-600/20 text-blue-400" : "hover:bg-slate-800 hover:text-white text-slate-400"}`}
                 >
                   <span className="material-symbols-outlined">payments</span>
-                  Comisiones (Mínima)
+                  Comisiones ({commissionRate}%)
                 </button>
                 <button
                   onClick={() => setActiveTab("analytics")}
@@ -669,7 +672,54 @@ export default function AdminDashboard() {
                   <p className="text-slate-500 text-sm font-bold uppercase mb-2">
                     Comisión Actual
                   </p>
-                  <p className="text-3xl font-black text-green-500">Mínima</p>
+                  {editingCommission ? (
+                    <div className="flex items-center gap-2 mt-2">
+                      <input
+                        type="number"
+                        min={1}
+                        max={100}
+                        value={tempCommission}
+                        onChange={(e) =>
+                          setTempCommission(Number(e.target.value))
+                        }
+                        className="w-20 text-center text-xl font-black border-2 border-green-400 rounded-lg px-2 py-1 focus:outline-none"
+                        autoFocus
+                      />
+                      <span className="text-green-500 font-black text-xl">
+                        %
+                      </span>
+                      <button
+                        onClick={() => {
+                          setCommissionRate(tempCommission);
+                          setEditingCommission(false);
+                        }}
+                        className="text-xs bg-green-500 text-white px-2 py-1 rounded-lg font-bold"
+                      >
+                        OK
+                      </button>
+                      <button
+                        onClick={() => setEditingCommission(false)}
+                        className="text-xs text-slate-400 hover:text-slate-600"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <div
+                      className="flex items-center gap-2 cursor-pointer group"
+                      onClick={() => {
+                        setTempCommission(commissionRate);
+                        setEditingCommission(true);
+                      }}
+                    >
+                      <p className="text-3xl font-black text-green-500">
+                        {commissionRate}%
+                      </p>
+                      <span className="material-symbols-outlined text-slate-400 group-hover:text-green-500 transition-colors text-sm">
+                        edit
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <div className="bg-white dark:bg-[#1a2632] p-6 rounded-2xl border border-slate-200 dark:border-slate-700">
                   <p className="text-slate-500 text-sm font-bold uppercase mb-2">

@@ -142,7 +142,11 @@ export default function SettingsPage() {
   };
 
   const dashboardPath =
-    userData?.role === "rep" ? "/dashboard/rep" : "/dashboard/client";
+    userData?.role === "admin"
+      ? "/admin"
+      : userData?.role === "rep"
+        ? "/dashboard/rep"
+        : "/dashboard/client";
 
   const menuItems = [
     { id: "perfil", label: "Mi Perfil", icon: "person" },
@@ -243,71 +247,75 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                {/* Role Switcher (Self-Correction) */}
-                <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 mb-8 animate-fade-in">
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div>
-                      <h3 className="font-bold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
-                        <span className="material-symbols-outlined text-primary">
-                          manage_accounts
-                        </span>
-                        Tipo de Cuenta
-                      </h3>
-                      <p className="text-sm text-slate-600 dark:text-slate-400">
-                        Tu rol actual es:{" "}
-                        <strong className="uppercase">
-                          {userData?.role === "rep"
-                            ? "Representante"
-                            : "Cliente"}
-                        </strong>
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        if (!user) return;
-                        const currentRole =
-                          userData?.role === "rep" ? "rep" : "client";
-                        const newRole =
-                          currentRole === "rep" ? "client" : "rep";
+                {/* Role Switcher - ONLY for admins */}
+                {userData?.role === "admin" && (
+                  <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 mb-8 animate-fade-in">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <div>
+                        <h3 className="font-bold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
+                          <span className="material-symbols-outlined text-primary">
+                            manage_accounts
+                          </span>
+                          Tipo de Cuenta
+                        </h3>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">
+                          Tu rol actual es:{" "}
+                          <strong className="uppercase">
+                            {userData?.role === "rep"
+                              ? "Representante"
+                              : userData?.role === "admin"
+                                ? "Administrador"
+                                : "Cliente"}
+                          </strong>
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (!user) return;
+                          const currentRole =
+                            userData?.role === "rep" ? "rep" : "client";
+                          const newRole =
+                            currentRole === "rep" ? "client" : "rep";
 
-                        if (
-                          !confirm(
-                            `¿Estás seguro de cambiar tu cuenta a modo ${newRole === "rep" ? "REPRESENTANTE" : "CLIENTE"}?`,
+                          if (
+                            !confirm(
+                              `¿Estás seguro de cambiar tu cuenta a modo ${newRole === "rep" ? "REPRESENTANTE" : "CLIENTE"}?`,
+                            )
                           )
-                        )
-                          return;
+                            return;
 
-                        setLoading(true);
-                        try {
-                          const { doc, updateDoc } =
-                            await import("firebase/firestore");
-                          const { db } = await import("@/lib/firebase");
-                          await updateDoc(doc(db, "users", user.uid), {
-                            role: newRole,
-                          });
-                          alert(
-                            `Tu cuenta ha sido actualizada a modo ${newRole === "rep" ? "REPRESENTANTE" : "CLIENTE"}. Recargando...`,
-                          );
-                          window.location.reload();
-                        } catch (err) {
-                          console.error(err);
-                          alert("Error al actualizar el rol.");
-                        } finally {
-                          setLoading(false);
-                        }
-                      }}
-                      className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors shadow-sm ${
-                        userData?.role === "rep"
-                          ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
-                          : "bg-green-100 text-green-700 hover:bg-green-200"
-                      }`}
-                    >
-                      Cambiar a{" "}
-                      {userData?.role === "rep" ? "Cliente" : "Representante"}
-                    </button>
+                          setLoading(true);
+                          try {
+                            const { doc, updateDoc } =
+                              await import("firebase/firestore");
+                            const { db } = await import("@/lib/firebase");
+                            await updateDoc(doc(db, "users", user.uid), {
+                              role: newRole,
+                            });
+                            alert(
+                              `Tu cuenta ha sido actualizada a modo ${newRole === "rep" ? "REPRESENTANTE" : "CLIENTE"}. Recargando...`,
+                            );
+                            window.location.reload();
+                          } catch (err) {
+                            console.error(err);
+                            alert("Error al actualizar el rol.");
+                          } finally {
+                            setLoading(false);
+                          }
+                        }}
+                        className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors shadow-sm ${
+                          userData?.role === "rep"
+                            ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                            : "bg-green-100 text-green-700 hover:bg-green-200"
+                        }`}
+                      >
+                        Cambiar a{" "}
+                        {userData?.role === "rep" ? "Cliente" : "Representante"}
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <form
                   onSubmit={handleSave}
@@ -431,12 +439,13 @@ export default function SettingsPage() {
                     </span>
                     Métodos de Pago
                   </h3>
-                  <div className="bg-[#009EE3] px-3 py-1.5 rounded-lg flex items-center justify-center shadow-sm">
-                    <img
-                      src="https://upload.wikimedia.org/wikipedia/commons/2/29/MercadoPago_Logo.png"
-                      alt="Mercado Pago"
-                      className="h-5 w-auto brightness-0 invert"
-                    />
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#009EE3] font-black text-xl tracking-tight">
+                      Mercado
+                    </span>
+                    <span className="bg-[#009EE3] text-white font-black text-xl px-1.5 rounded tracking-tight">
+                      Pago
+                    </span>
                   </div>
                 </div>
 
