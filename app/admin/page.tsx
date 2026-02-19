@@ -22,6 +22,7 @@ import UserGrowthChart from "@/components/admin/UserGrowthChart";
 import RecentActivityFeed, {
   ActivityItem,
 } from "@/components/admin/RecentActivityFeed";
+import UserEditModal from "@/components/admin/UserEditModal";
 import { format, subMonths } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -75,6 +76,8 @@ export default function AdminDashboard() {
   const [revenueData, setRevenueData] = useState<any[]>([]);
   const [userGrowthData, setUserGrowthData] = useState<any[]>([]);
   const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
+  const [selectedUser, setSelectedUser] = useState<PDCUser | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const downloadCSV = (data: any[], filename: string) => {
     if (!data.length) return;
@@ -360,7 +363,7 @@ export default function AdminDashboard() {
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${activeTab === "commissions" ? "bg-blue-600/20 text-blue-400" : "hover:bg-slate-800 hover:text-white text-slate-400"}`}
                 >
                   <span className="material-symbols-outlined">payments</span>
-                  Comisiones (15%)
+                  Comisiones (Mínima)
                 </button>
                 <button
                   onClick={() => setActiveTab("analytics")}
@@ -666,7 +669,7 @@ export default function AdminDashboard() {
                   <p className="text-slate-500 text-sm font-bold uppercase mb-2">
                     Comisión Actual
                   </p>
-                  <p className="text-3xl font-black text-green-500">15%</p>
+                  <p className="text-3xl font-black text-green-500">Mínima</p>
                 </div>
                 <div className="bg-white dark:bg-[#1a2632] p-6 rounded-2xl border border-slate-200 dark:border-slate-700">
                   <p className="text-slate-500 text-sm font-bold uppercase mb-2">
@@ -694,7 +697,7 @@ export default function AdminDashboard() {
                 <div className="bg-white dark:bg-[#1a2632] p-6 rounded-2xl border border-slate-200 dark:border-slate-700">
                   <div className="flex justify-between items-center mb-6">
                     <h3 className="font-bold text-slate-800 dark:text-white">
-                      Ingresos por Comisiones (15%)
+                      Ingresos por Comisiones (Mínima)
                     </h3>
                     <button
                       onClick={() => downloadCSV(revenueData, "ingresos.csv")}
@@ -845,7 +848,13 @@ export default function AdminDashboard() {
                               </span>
                             </td>
                             <td className="px-6 py-4">
-                              <button className="text-primary hover:underline text-xs font-bold">
+                              <button
+                                onClick={() => {
+                                  setSelectedUser(user);
+                                  setIsEditModalOpen(true);
+                                }}
+                                className="text-primary hover:underline text-xs font-bold"
+                              >
                                 Editar
                               </button>
                             </td>
@@ -860,6 +869,21 @@ export default function AdminDashboard() {
           )}
         </main>
       </div>
+
+      {selectedUser && (
+        <UserEditModal
+          user={selectedUser}
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setSelectedUser(null);
+          }}
+          onUpdate={() => {
+            // Refresh list
+            setActiveTab("users"); // Trigger re-fetch
+          }}
+        />
+      )}
     </div>
   );
 }

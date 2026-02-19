@@ -135,9 +135,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const allowedPaths = roleRoutes[userRole] || roleRoutes.client;
 
     // Check if current path starts with any allowed path
-    const isAllowedPath = allowedPaths.some((path) =>
-      normalizedPath.startsWith(path),
-    );
+    const isAllowedPath =
+      userRole === "admin" ||
+      allowedPaths.some((path) => normalizedPath.startsWith(path));
 
     // If trying to access a dashboard route
     const isDashboardRoute =
