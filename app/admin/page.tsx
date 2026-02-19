@@ -14,6 +14,8 @@ import {
   onSnapshot,
   doc,
   updateDoc,
+  getDoc,
+  setDoc,
   Timestamp,
 } from "firebase/firestore";
 import { sendNotification } from "@/lib/notifications";
@@ -81,6 +83,25 @@ export default function AdminDashboard() {
   const [commissionRate, setCommissionRate] = useState<number>(15);
   const [editingCommission, setEditingCommission] = useState(false);
   const [tempCommission, setTempCommission] = useState<number>(15);
+
+  // Load commission rate from Firestore on mount
+  useEffect(() => {
+    const loadCommission = async () => {
+      try {
+        const configDoc = await getDoc(doc(db, "config", "platform"));
+        if (configDoc.exists()) {
+          const rate = configDoc.data().commissionRate;
+          if (typeof rate === "number") {
+            setCommissionRate(rate);
+            setTempCommission(rate);
+          }
+        }
+      } catch (err) {
+        console.error("Error loading commission rate:", err);
+      }
+    };
+    loadCommission();
+  }, []);
 
   const downloadCSV = (data: any[], filename: string) => {
     if (!data.length) return;
@@ -155,7 +176,7 @@ export default function AdminDashboard() {
               : new Date(req.completedAt); // Handle Timestamp
             const month = format(date, "MMM/yy", { locale: es });
             if (revenueMap.has(month)) {
-              const commission = (req.budget || 0) * 0.15;
+              const commission = (req.budget || 0) * (commissionRate / 100);
               revenueMap.set(month, revenueMap.get(month) + commission);
             }
           }
@@ -689,9 +710,19 @@ export default function AdminDashboard() {
                         %
                       </span>
                       <button
-                        onClick={() => {
-                          setCommissionRate(tempCommission);
-                          setEditingCommission(false);
+                        onClick={async () => {
+                          try {
+                            await setDoc(
+                              doc(db, "config", "platform"),
+                              { commissionRate: tempCommission },
+                              { merge: true },
+                            );
+                            setCommissionRate(tempCommission);
+                            setEditingCommission(false);
+                          } catch (err) {
+                            console.error("Error saving commission:", err);
+                            alert("Error al guardar la comisión");
+                          }
                         }}
                         className="text-xs bg-green-500 text-white px-2 py-1 rounded-lg font-bold"
                       >
