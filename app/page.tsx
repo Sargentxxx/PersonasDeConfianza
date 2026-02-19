@@ -383,7 +383,7 @@ export default function LandingPage() {
                 Para Profesionales
               </h3>
               <div className="mb-6">
-                <span className="text-5xl font-bold text-white">15%</span>
+                <span className="text-5xl font-bold text-white">Mínima</span>
                 <span className="text-white/80 ml-2">comisión</span>
               </div>
               <ul className="space-y-4 mb-8">
