@@ -691,20 +691,30 @@ export default function AdminDashboard() {
           {activeTab === "commissions" && (
             <div className="animate-fade-in space-y-[var(--space-md)]">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-[var(--space-md)]">
-                <div className="bg-white dark:bg-[#1a2632] p-[var(--space-md)] rounded-2xl border border-slate-200 dark:border-slate-700 shadow-[var(--shadow-md)] hover:shadow-[var(--shadow-lg)] transition-all duration-300 hover:-translate-y-1 cursor-pointer">
-                  <p className="text-slate-500 text-sm font-bold uppercase mb-2">
-                    Ganancia Total
-                  </p>
-                  <p className="text-3xl font-black text-primary">
+                <div className="bg-white dark:bg-[#1a2632] p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-primary text-xl">
+                      payments
+                    </span>
+                    <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">
+                      Ganancia Total
+                    </p>
+                  </div>
+                  <p className="text-2xl font-black text-primary">
                     ${stats.totalGain.toFixed(2)}
                   </p>
                 </div>
-                <div className="bg-white dark:bg-[#1a2632] p-[var(--space-md)] rounded-2xl border border-slate-200 dark:border-slate-700 shadow-[var(--shadow-md)] hover:shadow-[var(--shadow-lg)] transition-all duration-300 hover:-translate-y-1 cursor-pointer group">
-                  <p className="text-slate-500 text-sm font-bold uppercase mb-2">
-                    Comisión Actual
-                  </p>
+                <div className="bg-white dark:bg-[#1a2632] p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-green-500 text-xl">
+                      percent
+                    </span>
+                    <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">
+                      Comisión Actual
+                    </p>
+                  </div>
                   {editingCommission ? (
-                    <div className="flex items-center gap-2 mt-2">
+                    <div className="flex items-center gap-2">
                       <input
                         title="Porcentaje de comisión"
                         type="number"
@@ -754,7 +764,7 @@ export default function AdminDashboard() {
                         setEditingCommission(true);
                       }}
                     >
-                      <p className="text-3xl font-black text-green-500">
+                      <p className="text-2xl font-black text-green-500">
                         {commissionRate}%
                       </p>
                       <span className="material-symbols-outlined text-slate-400 group-hover:text-green-500 transition-colors text-sm">
@@ -763,11 +773,16 @@ export default function AdminDashboard() {
                     </div>
                   )}
                 </div>
-                <div className="bg-white dark:bg-[#1a2632] p-[var(--space-md)] rounded-2xl border border-slate-200 dark:border-slate-700 shadow-[var(--shadow-md)] hover:shadow-[var(--shadow-lg)] transition-all duration-300 hover:-translate-y-1 cursor-pointer">
-                  <p className="text-slate-500 text-sm font-bold uppercase mb-2">
-                    Tareas Finalizadas
-                  </p>
-                  <p className="text-3xl font-black text-blue-500">
+                <div className="bg-white dark:bg-[#1a2632] p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-blue-500 text-xl">
+                      task_alt
+                    </span>
+                    <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">
+                      Tareas Finalizadas
+                    </p>
+                  </div>
+                  <p className="text-2xl font-black text-blue-500">
                     {stats.completedTasks}
                   </p>
                 </div>

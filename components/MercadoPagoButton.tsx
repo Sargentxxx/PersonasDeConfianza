@@ -89,13 +89,14 @@ export default function MercadoPagoButton({
             <span>Procesando...</span>
           </div>
         ) : (
-          <div className="flex items-center gap-2">
-            <span className="text-[#009EE3] font-black tracking-tight">
-              Mercado
-            </span>
-            <span className="bg-[#009EE3] text-white font-black px-1 rounded tracking-tight">
-              Pago
-            </span>
+          <div className="flex items-center justify-center">
+            {/* Official MercadoPago logo */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://http2.mlstatic.com/frontend-assets/ml-web-navigation/ui-navigation/6.6.92/mercadopago/logo__large@2x.png"
+              alt="Mercado Pago"
+              style={{ height: "22px", width: "auto" }}
+            />
           </div>
         )}
       </button>
