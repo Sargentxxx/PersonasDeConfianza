@@ -195,7 +195,7 @@ export default function RepDashboard() {
                 icon: "assignment_late",
                 href: "/dashboard/rep/tasks",
               },
-              { label: "Mensajes", icon: "forum", href: "/messages", count: 3 },
+              { label: "Mensajes", icon: "forum", href: "/messages" },
               { label: "Configuración", icon: "settings", href: "/settings" },
             ].map((item, i) => (
               <Link
@@ -214,11 +214,6 @@ export default function RepDashboard() {
                     {item.label}
                   </span>
                 </div>
-                {item.count && (
-                  <span className="px-2 py-0.5 bg-accent text-white rounded-full text-[10px] font-black">
-                    {item.count}
-                  </span>
-                )}
               </Link>
             ))}
             {/* Ingresos - opens modal instead of navigating */}
