@@ -153,6 +153,13 @@ export default function ClientDashboard() {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] dark:bg-[#020617] text-slate-900 dark:text-slate-100 flex overflow-hidden">
+      {/* Mobile overlay - closes sidebar on tap outside */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
       {/* Premium Sidebar */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-slate-900/50 backdrop-blur-3xl border-r border-slate-200 dark:border-white/5 transform transition-all duration-500 ease-spring lg:translate-x-0 lg:static ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
