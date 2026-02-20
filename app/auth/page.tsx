@@ -63,6 +63,16 @@ function AuthContent() {
         dbRole = userDoc.data().role;
       }
 
+      if (dbRole !== "admin" && dbRole !== role) {
+        await auth.signOut();
+        setError(
+          `Esta cuenta no está registrada como ${
+            role === "client" ? "cliente" : "representante"
+          }.`,
+        );
+        return;
+      }
+
       if (dbRole === "admin") router.push("/admin");
       else if (dbRole === "rep") router.push("/dashboard/rep");
       else router.push("/dashboard/client");
@@ -129,6 +139,15 @@ function AuthContent() {
         dbRole = role;
       } else {
         dbRole = userDoc.data().role;
+        if (dbRole !== "admin" && dbRole !== role) {
+          await auth.signOut();
+          setError(
+            `Esta cuenta no está registrada como ${
+              role === "client" ? "cliente" : "representante"
+            }.`,
+          );
+          return;
+        }
       }
 
       if (dbRole === "admin") router.push("/admin");

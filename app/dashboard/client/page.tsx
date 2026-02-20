@@ -491,7 +491,7 @@ export default function ClientDashboard() {
                               amount={Number(req.budget)}
                               clientEmail={user?.email || ""}
                               clientName={user?.displayName || ""}
-                              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-2xl flex items-center justify-center gap-2 text-xs transition-all shadow-lg shadow-blue-500/20"
+                              className="w-full bg-white dark:bg-slate-800 border-2 border-[#009ee3]/20 hover:border-[#009ee3]/50 text-slate-800 dark:text-white font-black py-3 rounded-2xl flex items-center justify-center transition-all shadow-lg shadow-[#009ee3]/10"
                             />
                           </div>
                         )}
