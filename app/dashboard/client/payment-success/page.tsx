@@ -2,12 +2,10 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useAuth } from "@/components/AuthProvider";
 
 function PaymentSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user } = useAuth();
   const [countdown, setCountdown] = useState(5);
 
   const requestId = searchParams.get("requestId");

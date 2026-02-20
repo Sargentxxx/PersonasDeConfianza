@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
                 );
             }
 
-            const updateData: Record<string, any> = {
+            const updateData: Record<string, unknown> = {
                 paymentId: paymentId,
                 paymentStatus: paymentData.status,
                 paymentStatusDetail: paymentData.status_detail,

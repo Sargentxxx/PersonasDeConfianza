@@ -200,11 +200,11 @@ export default function MyTasksPage() {
                 </Link>
               </div>
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-[var(--space-md)]">
                 {tasks.map((task) => (
                   <div
                     key={task.id}
-                    className="bg-white dark:bg-[#1a2632] rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 relative overflow-hidden group hover:shadow-md transition-all"
+                    className="bg-white dark:bg-[#1a2632] rounded-2xl p-[var(--space-md)] shadow-[var(--shadow-md)] border border-slate-100 dark:border-slate-700 relative overflow-hidden group hover:shadow-[var(--shadow-lg)] hover:-translate-y-1 transition-all duration-300"
                   >
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex items-center gap-3">
@@ -243,7 +243,8 @@ export default function MyTasksPage() {
                           ? task.createdAt.toDate().toLocaleDateString()
                           : task.createdAt
                             ? new Date(
-                                (task.createdAt as any).seconds * 1000,
+                                (task.createdAt as { seconds: number })
+                                  .seconds * 1000,
                               ).toLocaleDateString()
                             : ""}
                       </div>

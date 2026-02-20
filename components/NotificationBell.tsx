@@ -10,15 +10,24 @@ import {
   orderBy,
   limit,
   doc,
-  updateDoc,
   writeBatch,
 } from "firebase/firestore";
 import { useAuth } from "./AuthProvider";
 import Link from "next/link";
 
+interface AppNotification {
+  id: string;
+  status?: string;
+  type?: string;
+  title?: string;
+  message?: string;
+  link?: string;
+  createdAt?: { toDate: () => Date };
+}
+
 export default function NotificationBell() {
   const { user } = useAuth();
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -35,10 +44,10 @@ export default function NotificationBell() {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const notes = snapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data(),
+        ...(doc.data() as Omit<AppNotification, "id">),
       }));
       setNotifications(notes);
-      setUnreadCount(notes.filter((n: any) => n.status === "unread").length);
+      setUnreadCount(notes.filter((n) => n.status === "unread").length);
     });
 
     return () => unsubscribe();
@@ -56,7 +65,7 @@ export default function NotificationBell() {
     await batch.commit();
   };
 
-  const getTimeAgo = (timestamp: any) => {
+  const getTimeAgo = (timestamp: { toDate: () => Date } | undefined | null) => {
     if (!timestamp) return "Recientemente";
     const now = new Date();
     const date = timestamp.toDate();
@@ -68,7 +77,7 @@ export default function NotificationBell() {
     return date.toLocaleDateString();
   };
 
-  const getIcon = (type: string) => {
+  const getIcon = (type?: string) => {
     switch (type) {
       case "chat":
         return "chat";

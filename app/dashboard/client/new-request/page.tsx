@@ -203,10 +203,10 @@ export default function NewRequestPage() {
 
             <form
               onSubmit={handleSubmit}
-              className="bg-white dark:bg-[#1a2632] rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 sm:p-8 animate-fade-in"
+              className="bg-white dark:bg-[#1a2632] rounded-2xl shadow-[var(--shadow-md)] border border-slate-100 dark:border-slate-700 p-[var(--space-md)] sm:p-8 animate-fade-in"
             >
               {/* Sección 1: Qué necesitas */}
-              <div className="mb-8">
+              <div className="mb-[var(--space-md)]">
                 <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                   <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-primary text-xs">
                     1
@@ -214,9 +214,9 @@ export default function NewRequestPage() {
                   ¿Qué tipo de trámite es?
                 </h2>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-[var(--space-md)] mb-[var(--space-md)]">
                   <label
-                    className={`cursor-pointer border p-4 rounded-xl transition-all ${type === "gestoria" ? "border-primary bg-blue-50 dark:bg-blue-900/20 ring-1 ring-primary" : "border-slate-200 dark:border-slate-700 hover:border-primary/50"}`}
+                    className={`cursor-pointer border p-[var(--space-md)] rounded-xl transition-all duration-300 ${type === "gestoria" ? "border-primary bg-blue-50 dark:bg-blue-900/20 shadow-[var(--shadow-md)] ring-1 ring-primary" : "border-slate-200 dark:border-slate-700 hover:border-primary/50 hover:shadow-[var(--shadow-md)] hover:-translate-y-1"}`}
                   >
                     <input
                       type="radio"
@@ -242,7 +242,7 @@ export default function NewRequestPage() {
                   </label>
 
                   <label
-                    className={`cursor-pointer border p-4 rounded-xl transition-all ${type === "verificacion" ? "border-primary bg-blue-50 dark:bg-blue-900/20 ring-1 ring-primary" : "border-slate-200 dark:border-slate-700 hover:border-primary/50"}`}
+                    className={`cursor-pointer border p-[var(--space-md)] rounded-xl transition-all duration-300 ${type === "verificacion" ? "border-primary bg-blue-50 dark:bg-blue-900/20 shadow-[var(--shadow-md)] ring-1 ring-primary" : "border-slate-200 dark:border-slate-700 hover:border-primary/50 hover:shadow-[var(--shadow-md)] hover:-translate-y-1"}`}
                   >
                     <input
                       type="radio"
@@ -268,7 +268,7 @@ export default function NewRequestPage() {
                   </label>
 
                   <label
-                    className={`cursor-pointer border p-4 rounded-xl transition-all ${type === "compra" ? "border-primary bg-blue-50 dark:bg-blue-900/20 ring-1 ring-primary" : "border-slate-200 dark:border-slate-700 hover:border-primary/50"}`}
+                    className={`cursor-pointer border p-[var(--space-md)] rounded-xl transition-all duration-300 ${type === "compra" ? "border-primary bg-blue-50 dark:bg-blue-900/20 shadow-[var(--shadow-md)] ring-1 ring-primary" : "border-slate-200 dark:border-slate-700 hover:border-primary/50 hover:shadow-[var(--shadow-md)] hover:-translate-y-1"}`}
                   >
                     <input
                       type="radio"
@@ -294,7 +294,7 @@ export default function NewRequestPage() {
                   </label>
 
                   <label
-                    className={`cursor-pointer border p-4 rounded-xl transition-all ${type === "otro" ? "border-primary bg-blue-50 dark:bg-blue-900/20 ring-1 ring-primary" : "border-slate-200 dark:border-slate-700 hover:border-primary/50"}`}
+                    className={`cursor-pointer border p-[var(--space-md)] rounded-xl transition-all duration-300 ${type === "otro" ? "border-primary bg-blue-50 dark:bg-blue-900/20 shadow-[var(--shadow-md)] ring-1 ring-primary" : "border-slate-200 dark:border-slate-700 hover:border-primary/50 hover:shadow-[var(--shadow-md)] hover:-translate-y-1"}`}
                   >
                     <input
                       type="radio"
@@ -320,7 +320,7 @@ export default function NewRequestPage() {
                   </label>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-[var(--space-md)]">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                       Título de la Solicitud
@@ -352,14 +352,14 @@ export default function NewRequestPage() {
               </div>
 
               {/* Sección 2: Dónde y Cuándo */}
-              <div className="mb-8">
+              <div className="mb-[var(--space-md)]">
                 <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                   <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-primary text-xs">
                     2
                   </span>
                   Ubicación y Fecha
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-[var(--space-md)]">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                       Ciudad / Localidad
@@ -402,6 +402,7 @@ export default function NewRequestPage() {
                       Fecha Límite (Opcional)
                     </label>
                     <input
+                      title="Fecha límite"
                       type="date"
                       value={date}
                       onChange={(e) => setDate(e.target.value)}

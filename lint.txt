@@ -1,0 +1,4 @@
+﻿
+> personas-de-confianza@0.1.0 lint
+> eslint
+
