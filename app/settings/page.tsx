@@ -18,7 +18,15 @@ export default function SettingsPage() {
   const [address, setAddress] = useState("");
   const [schedule, setSchedule] = useState("");
   const [transactions, setTransactions] = useState<
-    Array<{ id: string; [key: string]: unknown }>
+    Array<{
+      id: string;
+      title?: string;
+      paidAt?: any;
+      paymentAmount?: number;
+      budget?: number;
+      paymentStatus?: string;
+      [key: string]: unknown;
+    }>
   >([]);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
 

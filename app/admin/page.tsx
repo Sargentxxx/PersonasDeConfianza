@@ -61,6 +61,8 @@ interface RequestData {
   repName: string;
   status: string;
   budget?: number;
+  completedAt?: Timestamp;
+  createdAt?: Timestamp;
 }
 
 export default function AdminDashboard() {
@@ -79,7 +81,7 @@ export default function AdminDashboard() {
     Array<{ date: string; revenue: number }>
   >([]);
   const [userGrowthData, setUserGrowthData] = useState<
-    Array<{ name: string; clients: number; reps: number }>
+    Array<{ date: string; clients: number; reps: number }>
   >([]);
   const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
   const [selectedUser, setSelectedUser] = useState<PDCUser | null>(null);
@@ -177,7 +179,7 @@ export default function AdminDashboard() {
           if (req.status === "completed" && req.completedAt) {
             const date = req.completedAt.toDate
               ? req.completedAt.toDate()
-              : new Date(req.completedAt); // Handle Timestamp
+              : new Date(req.completedAt as unknown as string); // Handle mock string format
             const month = format(date, "MMM/yy", { locale: es });
             if (revenueMap.has(month)) {
               const commission = (req.budget || 0) * (commissionRate / 100);
@@ -574,9 +576,9 @@ export default function AdminDashboard() {
                               icon: "face",
                             },
                           ].map((docType) => {
-                            const docUrl = (pUser as Record<string, string>)[
-                              `doc_${docType.id}`
-                            ];
+                            const docUrl = (
+                              pUser as unknown as Record<string, string>
+                            )[`doc_${docType.id}`];
                             return (
                               <div
                                 key={docType.id}
@@ -851,7 +853,10 @@ export default function AdminDashboard() {
                     <div className="pt-4 border-t border-white/20">
                       <button
                         onClick={() =>
-                          downloadCSV(allUsers, "usuarios_total.csv")
+                          downloadCSV(
+                            allUsers as unknown as Record<string, unknown>[],
+                            "usuarios_total.csv",
+                          )
                         }
                         className="w-full bg-white/10 hover:bg-white/20 transition-colors py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2"
                       >
