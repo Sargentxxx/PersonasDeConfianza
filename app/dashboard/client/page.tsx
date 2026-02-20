@@ -194,7 +194,6 @@ export default function ClientDashboard() {
                 label: "Mensajes",
                 icon: "chat_bubble",
                 href: "/dashboard/chat",
-                count: 2,
               },
               { label: "Directorio", icon: "find_in_page", href: "#" },
               { label: "Mi Perfil", icon: "account_circle", href: "/settings" },
@@ -214,11 +213,6 @@ export default function ClientDashboard() {
                     {item.label}
                   </span>
                 </div>
-                {item.count && (
-                  <span className="w-5 h-5 bg-accent text-white rounded-full text-[10px] flex items-center justify-center font-black animate-pulse">
-                    {item.count}
-                  </span>
-                )}
               </Link>
             ))}
           </nav>
@@ -491,7 +485,7 @@ export default function ClientDashboard() {
                               amount={Number(req.budget)}
                               clientEmail={user?.email || ""}
                               clientName={user?.displayName || ""}
-                              className="w-full bg-white dark:bg-slate-800 border-2 border-[#009ee3]/20 hover:border-[#009ee3]/50 text-slate-800 dark:text-white font-black py-3 rounded-2xl flex items-center justify-center transition-all shadow-lg shadow-[#009ee3]/10"
+                              className="w-full h-[48px] max-w-[300px] border-none shadow-none bg-transparent hover:bg-transparent flex items-center justify-center p-0 transition-transform hover:scale-[1.02] active:scale-[0.98]"
                             />
                           </div>
                         )}
