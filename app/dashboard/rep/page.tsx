@@ -157,6 +157,13 @@ export default function RepDashboard() {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] dark:bg-[#020617] text-slate-900 dark:text-slate-100 flex overflow-hidden">
+      {/* Mobile overlay - closes sidebar on tap outside */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
       {/* Premium Sidebar */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-slate-900/50 backdrop-blur-3xl border-r border-slate-200 dark:border-white/5 transform transition-all duration-500 ease-spring lg:translate-x-0 lg:static ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
@@ -175,6 +182,7 @@ export default function RepDashboard() {
           </Link>
 
           <nav className="flex-1 space-y-2">
+            {/* Link items - navigate to pages */}
             {[
               {
                 label: "Oportunidades",
@@ -187,19 +195,14 @@ export default function RepDashboard() {
                 icon: "assignment_late",
                 href: "/dashboard/rep/tasks",
               },
-              {
-                label: "Ingresos",
-                icon: "payments",
-                href: "#",
-                onClick: () => setSelectedStat("income"),
-              },
               { label: "Mensajes", icon: "forum", href: "/messages", count: 3 },
               { label: "Configuración", icon: "settings", href: "/settings" },
             ].map((item, i) => (
-              <button
+              <Link
                 key={i}
-                onClick={item.onClick}
-                className={`w-full flex items-center justify-between p-4 rounded-2xl transition-all group ${
+                href={item.href}
+                onClick={() => setSidebarOpen(false)}
+                className={`flex items-center justify-between p-4 rounded-2xl transition-all group ${
                   item.active
                     ? "bg-primary text-white shadow-xl shadow-primary/30"
                     : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-primary"
@@ -216,8 +219,23 @@ export default function RepDashboard() {
                     {item.count}
                   </span>
                 )}
-              </button>
+              </Link>
             ))}
+            {/* Ingresos - opens modal instead of navigating */}
+            <button
+              onClick={() => {
+                setSelectedStat("income");
+                setSidebarOpen(false);
+              }}
+              className="w-full flex items-center justify-between p-4 rounded-2xl transition-all group text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-primary"
+            >
+              <div className="flex items-center gap-4">
+                <span className="material-symbols-outlined">payments</span>
+                <span className="font-bold text-sm tracking-tight">
+                  Ingresos
+                </span>
+              </div>
+            </button>
           </nav>
 
           <div className="mt-auto space-y-4">
