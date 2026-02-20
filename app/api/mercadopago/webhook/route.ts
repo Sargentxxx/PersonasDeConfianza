@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 import { MercadoPagoConfig, Payment } from "mercadopago";
-import { db } from "@/lib/firebase";
-import { doc, updateDoc, serverTimestamp, getDoc } from "firebase/firestore";
+import { getAdminDb } from "@/lib/firebase-admin";
+import { FieldValue } from "firebase-admin/firestore";
 
 // Configuración del cliente de Mercado Pago
 export async function POST(request: NextRequest) {
@@ -42,11 +42,12 @@ export async function POST(request: NextRequest) {
             }
 
             // Actualizar el estado en Firebase según el status del pago
-            const requestRef = doc(db, "requests", requestId);
+            const adminDb = getAdminDb();
+            const requestRef = adminDb.collection("requests").doc(requestId);
 
             // Verificar que el documento existe
-            const requestDoc = await getDoc(requestRef);
-            if (!requestDoc.exists()) {
+            const requestDoc = await requestRef.get();
+            if (!requestDoc.exists) {
                 console.error("Request not found:", requestId);
                 return NextResponse.json(
                     { error: "Request not found" },
@@ -60,14 +61,14 @@ export async function POST(request: NextRequest) {
                 paymentStatusDetail: paymentData.status_detail,
                 paymentMethod: paymentData.payment_method_id,
                 paymentAmount: paymentData.transaction_amount,
-                paymentUpdatedAt: serverTimestamp(),
+                paymentUpdatedAt: FieldValue.serverTimestamp(),
             };
 
             // Mapear estados de Mercado Pago a estados de nuestra app
             switch (paymentData.status) {
                 case "approved":
                     updateData.status = "paid"; // Pagado, en ejecución
-                    updateData.paidAt = serverTimestamp();
+                    updateData.paidAt = FieldValue.serverTimestamp();
                     break;
                 case "pending":
                 case "in_process":
@@ -81,7 +82,7 @@ export async function POST(request: NextRequest) {
                     console.log("Unhandled payment status:", paymentData.status);
             }
 
-            await updateDoc(requestRef, updateData);
+            await requestRef.update(updateData);
 
             console.log("Request updated successfully:", requestId);
 

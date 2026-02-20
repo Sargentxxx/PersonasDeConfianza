@@ -1,20 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 import { MercadoPagoConfig, Preference } from "mercadopago";
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore, doc, getDoc } from "firebase/firestore";
-
-// Initialize Firebase client SDK (safe to call in server context)
-const firebaseConfig = {
-    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-};
-const firebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const db = getFirestore(firebaseApp);
+import { getAdminDb } from "@/lib/firebase-admin";
 
 /**
  * Fetches the commission rate from Firestore config.
@@ -22,9 +9,11 @@ const db = getFirestore(firebaseApp);
  */
 async function getCommissionRate(): Promise<number> {
     try {
-        const configDoc = await getDoc(doc(db, "config", "platform"));
-        if (configDoc.exists()) {
-            const rate = configDoc.data().commissionRate;
+        const adminDb = getAdminDb();
+        const configDoc = await adminDb.collection("config").doc("platform").get();
+        if (configDoc.exists) {
+            const data = configDoc.data();
+            const rate = data?.commissionRate;
             if (typeof rate === "number" && rate > 0 && rate <= 100) {
                 return rate;
             }
