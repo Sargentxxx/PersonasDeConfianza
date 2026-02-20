@@ -39,7 +39,8 @@ async function testMercadoPago() {
         console.log("Preferencia ID:", result.id);
         console.log("URL de Pago (Sandbox):", result.sandbox_init_point);
         console.log("URL de Pago (Producción):", result.init_point);
-    } catch (error: any) {
+    } catch (err: unknown) {
+        const error = err as { response?: unknown; status?: number; message?: string };
         console.error("❌ Error en la prueba:");
         if (error.response) {
             console.error("Status:", error.status);

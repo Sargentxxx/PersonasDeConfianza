@@ -123,8 +123,8 @@ function ChatContent() {
       })) as Message[];
       // Ensure messages are sorted by createdAt, handling potential nulls
       const sortedMsgs = msgs.sort((a, b) => {
-        const aTime = a.createdAt?.toMillis() || 0;
-        const bTime = b.createdAt?.toMillis() || 0;
+        const aTime = a.createdAt?.toMillis?.() || 0;
+        const bTime = b.createdAt?.toMillis?.() || 0;
         return aTime - bTime;
       });
       setMessages(sortedMsgs);
@@ -222,7 +222,7 @@ function ChatContent() {
       await uploadBytes(storageRef, file);
       const url = await getDownloadURL(storageRef);
 
-      const messageData: any = {
+      const messageData: Record<string, unknown> = {
         senderId: user.uid,
         createdAt: serverTimestamp(),
         fileName: file.name,
@@ -402,8 +402,8 @@ function ChatContent() {
                       : "bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-bl-none"
                   }`}
                 >
-                  {/* Image */}
                   {msg.imageUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={msg.imageUrl}
                       alt="Imagen adjunta"

@@ -75,8 +75,12 @@ export default function AdminDashboard() {
   const [usersLoading, setUsersLoading] = useState(false);
   const [disputesLoading, setDisputesLoading] = useState(false);
   const [stats, setStats] = useState({ totalGain: 0, completedTasks: 0 });
-  const [revenueData, setRevenueData] = useState<any[]>([]);
-  const [userGrowthData, setUserGrowthData] = useState<any[]>([]);
+  const [revenueData, setRevenueData] = useState<
+    Array<{ date: string; revenue: number }>
+  >([]);
+  const [userGrowthData, setUserGrowthData] = useState<
+    Array<{ name: string; clients: number; reps: number }>
+  >([]);
   const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
   const [selectedUser, setSelectedUser] = useState<PDCUser | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -103,7 +107,7 @@ export default function AdminDashboard() {
     loadCommission();
   }, []);
 
-  const downloadCSV = (data: any[], filename: string) => {
+  const downloadCSV = (data: Record<string, unknown>[], filename: string) => {
     if (!data.length) return;
     const headers = Object.keys(data[0]);
     const csvContent =
@@ -157,7 +161,7 @@ export default function AdminDashboard() {
       collection(db, "requests"),
       (snapshot) => {
         const requests = snapshot.docs.map(
-          (d) => ({ id: d.id, ...d.data() }) as any,
+          (d) => ({ id: d.id, ...d.data() }) as RequestData,
         );
 
         // Calculate Revenue (Last 6 months)
@@ -169,7 +173,7 @@ export default function AdminDashboard() {
         const revenueMap = new Map();
         last6Months.forEach((m) => revenueMap.set(m, 0));
 
-        requests.forEach((req: any) => {
+        requests.forEach((req: RequestData) => {
           if (req.status === "completed" && req.completedAt) {
             const date = req.completedAt.toDate
               ? req.completedAt.toDate()
@@ -192,7 +196,7 @@ export default function AdminDashboard() {
         // Activity Feed (Mocked from requests/users for now or real if available)
         const activities: ActivityItem[] = requests
           .slice(0, 5)
-          .map((req: any) => ({
+          .map((req: RequestData) => ({
             id: req.id,
             type: "new_request",
             title: "Nueva Solicitud",
@@ -205,7 +209,7 @@ export default function AdminDashboard() {
       },
     );
 
-    const unsubscribeUsers = onSnapshot(collection(db, "users"), (snapshot) => {
+    const unsubscribeUsers = onSnapshot(collection(db, "users"), () => {
       // Simple growth metric
       const growthMap = new Map();
       // Initialize last 6 months
@@ -231,7 +235,7 @@ export default function AdminDashboard() {
       unsubscribeRequests();
       unsubscribeUsers();
     };
-  }, [userData, activeTab]);
+  }, [userData, activeTab, commissionRate]);
 
   useEffect(() => {
     if (userData?.role !== "admin") return;
@@ -481,7 +485,7 @@ export default function AdminDashboard() {
 
           {activeTab === "validation" && (
             <div className="animate-fade-in">
-              <div className="space-y-6">
+              <div className="grid grid-cols-1 gap-[var(--space-md)]">
                 {loading ? (
                   <div className="text-center py-20">
                     <div className="animate-spin w-10 h-10 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
@@ -503,10 +507,11 @@ export default function AdminDashboard() {
                   pendingUsers.map((pUser) => (
                     <div
                       key={pUser.id}
-                      className="bg-white dark:bg-[#1a2632] rounded-2xl shadow-md border border-slate-200 dark:border-slate-700 overflow-hidden"
+                      className="bg-white dark:bg-[#1a2632] rounded-2xl shadow-[var(--shadow-md)] border border-slate-200 dark:border-slate-700 overflow-hidden hover:shadow-[var(--shadow-lg)] transition-all duration-300 hover:-translate-y-1"
                     >
-                      <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                      <div className="p-[var(--space-md)] border-b border-slate-100 dark:border-slate-700 flex flex-col lg:flex-row lg:items-center justify-between gap-[var(--space-md)]">
                         <div className="flex items-center gap-4">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={
                               pUser.photoURL ||
@@ -551,7 +556,7 @@ export default function AdminDashboard() {
                           </button>
                         </div>
                       </div>
-                      <div className="p-6 bg-slate-50 dark:bg-slate-800/50">
+                      <div className="p-[var(--space-md)] bg-slate-50 dark:bg-slate-800/50">
                         <h4 className="font-bold text-slate-700 dark:text-slate-300 mb-4 text-sm uppercase tracking-wide">
                           Documentación Presentada
                         </h4>
@@ -569,7 +574,9 @@ export default function AdminDashboard() {
                               icon: "face",
                             },
                           ].map((docType) => {
-                            const docUrl = (pUser as any)[`doc_${docType.id}`];
+                            const docUrl = (pUser as Record<string, string>)[
+                              `doc_${docType.id}`
+                            ];
                             return (
                               <div
                                 key={docType.id}
@@ -595,6 +602,7 @@ export default function AdminDashboard() {
                                         visibility
                                       </span>
                                     </div>
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img
                                       src={docUrl}
                                       alt={docType.label}
@@ -650,11 +658,11 @@ export default function AdminDashboard() {
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 gap-[var(--space-md)]">
                   {disputes.map((dispute) => (
                     <div
                       key={dispute.id}
-                      className="bg-white dark:bg-[#1a2632] p-6 rounded-2xl border border-slate-200 dark:border-slate-700 flex justify-between items-center"
+                      className="bg-white dark:bg-[#1a2632] p-[var(--space-md)] rounded-2xl border border-slate-200 dark:border-slate-700 flex justify-between items-center shadow-[var(--shadow-md)] hover:shadow-[var(--shadow-lg)] transition-all duration-300 hover:-translate-y-1 cursor-pointer"
                     >
                       <div>
                         <h4 className="font-bold text-lg">{dispute.title}</h4>
@@ -679,9 +687,9 @@ export default function AdminDashboard() {
           )}
 
           {activeTab === "commissions" && (
-            <div className="animate-fade-in space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                <div className="bg-white dark:bg-[#1a2632] p-6 rounded-2xl border border-slate-200 dark:border-slate-700">
+            <div className="animate-fade-in space-y-[var(--space-md)]">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-[var(--space-md)]">
+                <div className="bg-white dark:bg-[#1a2632] p-[var(--space-md)] rounded-2xl border border-slate-200 dark:border-slate-700 shadow-[var(--shadow-md)] hover:shadow-[var(--shadow-lg)] transition-all duration-300 hover:-translate-y-1 cursor-pointer">
                   <p className="text-slate-500 text-sm font-bold uppercase mb-2">
                     Ganancia Total
                   </p>
@@ -689,13 +697,14 @@ export default function AdminDashboard() {
                     ${stats.totalGain.toFixed(2)}
                   </p>
                 </div>
-                <div className="bg-white dark:bg-[#1a2632] p-6 rounded-2xl border border-slate-200 dark:border-slate-700">
+                <div className="bg-white dark:bg-[#1a2632] p-[var(--space-md)] rounded-2xl border border-slate-200 dark:border-slate-700 shadow-[var(--shadow-md)] hover:shadow-[var(--shadow-lg)] transition-all duration-300 hover:-translate-y-1 cursor-pointer group">
                   <p className="text-slate-500 text-sm font-bold uppercase mb-2">
                     Comisión Actual
                   </p>
                   {editingCommission ? (
                     <div className="flex items-center gap-2 mt-2">
                       <input
+                        title="Porcentaje de comisión"
                         type="number"
                         min={1}
                         max={100}
@@ -752,7 +761,7 @@ export default function AdminDashboard() {
                     </div>
                   )}
                 </div>
-                <div className="bg-white dark:bg-[#1a2632] p-6 rounded-2xl border border-slate-200 dark:border-slate-700">
+                <div className="bg-white dark:bg-[#1a2632] p-[var(--space-md)] rounded-2xl border border-slate-200 dark:border-slate-700 shadow-[var(--shadow-md)] hover:shadow-[var(--shadow-lg)] transition-all duration-300 hover:-translate-y-1 cursor-pointer">
                   <p className="text-slate-500 text-sm font-bold uppercase mb-2">
                     Tareas Finalizadas
                   </p>
@@ -772,11 +781,11 @@ export default function AdminDashboard() {
           )}
 
           {activeTab === "analytics" && (
-            <div className="animate-fade-in space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="animate-fade-in space-y-[var(--space-md)]">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-[var(--space-md)]">
                 {/* Revenue Chart */}
-                <div className="bg-white dark:bg-[#1a2632] p-6 rounded-2xl border border-slate-200 dark:border-slate-700">
-                  <div className="flex justify-between items-center mb-6">
+                <div className="bg-white dark:bg-[#1a2632] p-[var(--space-md)] rounded-2xl border border-slate-200 dark:border-slate-700 shadow-[var(--shadow-md)] hover:shadow-[var(--shadow-lg)] transition-all duration-300 hover:-translate-y-1 cursor-pointer">
+                  <div className="flex justify-between items-center mb-[var(--space-md)]">
                     <h3 className="font-bold text-slate-800 dark:text-white">
                       Ingresos por Comisiones (Mínima)
                     </h3>
@@ -794,8 +803,8 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* User Growth Chart */}
-                <div className="bg-white dark:bg-[#1a2632] p-6 rounded-2xl border border-slate-200 dark:border-slate-700">
-                  <div className="flex justify-between items-center mb-6">
+                <div className="bg-white dark:bg-[#1a2632] p-[var(--space-md)] rounded-2xl border border-slate-200 dark:border-slate-700 shadow-[var(--shadow-md)] hover:shadow-[var(--shadow-lg)] transition-all duration-300 hover:-translate-y-1 cursor-pointer">
+                  <div className="flex justify-between items-center mb-[var(--space-md)]">
                     <h3 className="font-bold text-slate-800 dark:text-white">
                       Crecimiento de Usuarios
                     </h3>
@@ -815,14 +824,14 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-[var(--space-md)] mt-[var(--space-md)]">
                 {/* Recent Activity */}
-                <div className="lg:col-span-2 bg-white dark:bg-[#1a2632] p-6 rounded-2xl border border-slate-200 dark:border-slate-700">
+                <div className="lg:col-span-2 bg-white dark:bg-[#1a2632] p-[var(--space-md)] rounded-2xl border border-slate-200 dark:border-slate-700 shadow-[var(--shadow-md)] hover:shadow-[var(--shadow-lg)] transition-all duration-300 hover:-translate-y-1 cursor-pointer">
                   <RecentActivityFeed activities={recentActivity} />
                 </div>
 
                 {/* Quick Actions / Summary */}
-                <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-6 text-white">
+                <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-[var(--space-md)] text-white shadow-[var(--shadow-md)] hover:shadow-[var(--shadow-lg)] transition-all duration-300 hover:-translate-y-1 cursor-pointer">
                   <h3 className="font-bold text-lg mb-4">Resumen General</h3>
                   <div className="space-y-4">
                     <div>
@@ -895,6 +904,7 @@ export default function AdminDashboard() {
                           >
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-3">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                   src={
                                     user.photoURL ||

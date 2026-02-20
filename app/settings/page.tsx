@@ -17,7 +17,9 @@ export default function SettingsPage() {
   const [specialization, setSpecialization] = useState("");
   const [address, setAddress] = useState("");
   const [schedule, setSchedule] = useState("");
-  const [transactions, setTransactions] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<
+    Array<{ id: string; [key: string]: unknown }>
+  >([]);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
 
   // Financial Info State (Rep only)
@@ -39,11 +41,19 @@ export default function SettingsPage() {
       setAddress(userData.address || "");
       setAddress(userData.address || "");
       setSchedule(userData.schedule || "");
-      if ((userData as any).financialInfo) {
-        setCbu((userData as any).financialInfo.cbu || "");
-        setAlias((userData as any).financialInfo.alias || "");
-        setBankName((userData as any).financialInfo.bankName || "");
-        setAccountHolder((userData as any).financialInfo.accountHolder || "");
+      const userWithFinances = userData as {
+        financialInfo?: {
+          cbu?: string;
+          alias?: string;
+          bankName?: string;
+          accountHolder?: string;
+        };
+      };
+      if (userWithFinances.financialInfo) {
+        setCbu(userWithFinances.financialInfo.cbu || "");
+        setAlias(userWithFinances.financialInfo.alias || "");
+        setBankName(userWithFinances.financialInfo.bankName || "");
+        setAccountHolder(userWithFinances.financialInfo.accountHolder || "");
       }
     }
   }, [user, userData]);
@@ -53,6 +63,7 @@ export default function SettingsPage() {
     if (activeTab === "pagos" && user) {
       fetchTransactions();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, user]);
 
   const fetchTransactions = async () => {
@@ -212,6 +223,7 @@ export default function SettingsPage() {
               <div className="space-y-8 animate-fade-in">
                 <div className="flex flex-col sm:flex-row items-center gap-6 pb-8 border-b border-slate-100 dark:border-slate-800">
                   <div className="relative group cursor-pointer">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={
                         user?.photoURL ||
@@ -748,8 +760,9 @@ export default function SettingsPage() {
                               const input = document.createElement("input");
                               input.type = "file";
                               input.accept = "image/*";
-                              input.onchange = async (e: any) => {
-                                const file = e.target.files[0];
+                              input.onchange = async (e: Event) => {
+                                const target = e.target as HTMLInputElement;
+                                const file = target.files?.[0];
                                 if (!file) return;
                                 setLoading(true);
                                 try {

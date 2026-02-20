@@ -55,6 +55,7 @@ export default function DashboardSidebar({
           {/* User Profile */}
           <div className="p-6 flex items-center gap-4">
             <div className="relative">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={user.image}
                 alt={user.name}

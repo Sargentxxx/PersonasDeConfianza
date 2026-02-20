@@ -9,7 +9,6 @@ function PaymentFailureContent() {
   const [countdown, setCountdown] = useState(10);
 
   const requestId = searchParams.get("requestId");
-  const status = searchParams.get("status");
   const statusDetail = searchParams.get("status_detail");
 
   useEffect(() => {
