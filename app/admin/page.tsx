@@ -25,6 +25,7 @@ import RecentActivityFeed, {
   ActivityItem,
 } from "@/components/admin/RecentActivityFeed";
 import UserEditModal from "@/components/admin/UserEditModal";
+import CommissionDashboard from "@/components/admin/CommissionDashboard";
 import { format, subMonths } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -59,10 +60,22 @@ interface RequestData {
   title: string;
   clientName: string;
   repName: string;
+  repId?: string;
   status: string;
   budget?: number;
   completedAt?: Timestamp;
   createdAt?: Timestamp;
+}
+
+interface CommissionRecord {
+  id: string;
+  repId: string;
+  repName: string;
+  amount: number;
+  commissionRate: number;
+  taskIds: string[];
+  paidAt?: Timestamp | null;
+  status: "paid";
 }
 
 export default function AdminDashboard() {
@@ -73,6 +86,10 @@ export default function AdminDashboard() {
   const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([]);
   const [allUsers, setAllUsers] = useState<PDCUser[]>([]);
   const [disputes, setDisputes] = useState<RequestData[]>([]);
+  const [completedRequests, setCompletedRequests] = useState<RequestData[]>([]);
+  const [commissionRecords, setCommissionRecords] = useState<
+    CommissionRecord[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [usersLoading, setUsersLoading] = useState(false);
   const [disputesLoading, setDisputesLoading] = useState(false);
@@ -258,6 +275,75 @@ export default function AdminDashboard() {
 
     return () => unsubStats();
   }, [userData]);
+
+  // Load commissions tab data
+  useEffect(() => {
+    if (userData?.role !== "admin" || activeTab !== "commissions") return;
+
+    // Completed requests (for commission calculation)
+    const qCompleted = query(
+      collection(db, "requests"),
+      where("status", "==", "completed"),
+    );
+    const unsubCompleted = onSnapshot(qCompleted, (snapshot) => {
+      setCompletedRequests(
+        snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as RequestData),
+      );
+    });
+
+    // Disputed requests (for blocking)
+    const qDisputed = query(
+      collection(db, "requests"),
+      where("status", "==", "disputed"),
+    );
+    const unsubDisputed = onSnapshot(qDisputed, (snapshot) => {
+      setDisputes(
+        snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as RequestData),
+      );
+    });
+
+    // Commission records (payment history)
+    const unsubCommissions = onSnapshot(
+      collection(db, "commissions"),
+      (snapshot) => {
+        setCommissionRecords(
+          snapshot.docs.map(
+            (d) => ({ id: d.id, ...d.data() }) as CommissionRecord,
+          ),
+        );
+      },
+    );
+
+    return () => {
+      unsubCompleted();
+      unsubDisputed();
+      unsubCommissions();
+    };
+  }, [userData, activeTab]);
+
+  const handleReleasePayment = async (
+    repId: string,
+    repName: string,
+    taskIds: string[],
+    amount: number,
+  ) => {
+    try {
+      const { addDoc } = await import("firebase/firestore");
+      await addDoc(collection(db, "commissions"), {
+        repId,
+        repName,
+        amount,
+        commissionRate,
+        taskIds,
+        paidAt: new Date(),
+        paidBy: userData?.email || "admin",
+        status: "paid",
+      });
+    } catch (err) {
+      console.error("Error releasing payment:", err);
+      throw err;
+    }
+  };
 
   useEffect(() => {
     if (userData?.role !== "admin") return;
@@ -689,111 +775,114 @@ export default function AdminDashboard() {
           )}
 
           {activeTab === "commissions" && (
-            <div className="animate-fade-in space-y-[var(--space-md)]">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-[var(--space-md)]">
-                <div className="bg-white dark:bg-[#1a2632] p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-primary text-xl">
-                      payments
-                    </span>
-                    <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">
-                      Ganancia Total
-                    </p>
-                  </div>
-                  <p className="text-2xl font-black text-primary">
-                    ${stats.totalGain.toFixed(2)}
-                  </p>
-                </div>
-                <div className="bg-white dark:bg-[#1a2632] p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-green-500 text-xl">
-                      percent
-                    </span>
-                    <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">
-                      Comisión Actual
-                    </p>
-                  </div>
-                  {editingCommission ? (
-                    <div className="flex items-center gap-2">
-                      <input
-                        title="Porcentaje de comisión"
-                        type="number"
-                        min={1}
-                        max={100}
-                        value={tempCommission}
-                        onChange={(e) =>
-                          setTempCommission(Number(e.target.value))
-                        }
-                        className="w-20 text-center text-xl font-black border-2 border-green-400 rounded-lg px-2 py-1 focus:outline-none"
-                        autoFocus
-                      />
-                      <span className="text-green-500 font-black text-xl">
-                        %
-                      </span>
-                      <button
-                        onClick={async () => {
-                          try {
-                            await setDoc(
-                              doc(db, "config", "platform"),
-                              { commissionRate: tempCommission },
-                              { merge: true },
-                            );
-                            setCommissionRate(tempCommission);
-                            setEditingCommission(false);
-                          } catch (err) {
-                            console.error("Error saving commission:", err);
-                            alert("Error al guardar la comisión");
-                          }
-                        }}
-                        className="text-xs bg-green-500 text-white px-2 py-1 rounded-lg font-bold"
-                      >
-                        OK
-                      </button>
-                      <button
-                        onClick={() => setEditingCommission(false)}
-                        className="text-xs text-slate-400 hover:text-slate-600"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ) : (
-                    <div
-                      className="flex items-center gap-2 cursor-pointer group"
-                      onClick={() => {
-                        setTempCommission(commissionRate);
-                        setEditingCommission(true);
-                      }}
-                    >
-                      <p className="text-2xl font-black text-green-500">
-                        {commissionRate}%
-                      </p>
-                      <span className="material-symbols-outlined text-slate-400 group-hover:text-green-500 transition-colors text-sm">
-                        edit
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <div className="bg-white dark:bg-[#1a2632] p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-blue-500 text-xl">
-                      task_alt
-                    </span>
-                    <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">
-                      Tareas Finalizadas
-                    </p>
-                  </div>
-                  <p className="text-2xl font-black text-blue-500">
-                    {stats.completedTasks}
-                  </p>
-                </div>
-              </div>
-              <div className="bg-yellow-50 dark:bg-yellow-900/10 p-6 rounded-2xl border border-yellow-100 dark:border-yellow-900/30">
-                <p className="text-yellow-700 dark:text-yellow-500 text-sm flex items-center gap-2">
-                  <span className="material-symbols-outlined">info</span>
-                  La recaudación de comisiones se procesará automáticamente vía
-                  Mercado Pago al finalizar cada servicio.
+            <div className="animate-fade-in">
+              {/* Commission rate editor */}
+              <div className="flex items-center gap-4 mb-6 p-4 bg-white dark:bg-[#1a2632] rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                <span className="material-symbols-outlined text-green-500">
+                  percent
+                </span>
+                <p className="font-bold text-sm text-slate-700 dark:text-slate-300">
+                  Tasa de comisión activa:
                 </p>
+                {editingCommission ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      title="Porcentaje de comisión"
+                      type="number"
+                      min={1}
+                      max={100}
+                      value={tempCommission}
+                      onChange={(e) =>
+                        setTempCommission(Number(e.target.value))
+                      }
+                      className="w-20 text-center text-lg font-black border-2 border-green-400 rounded-lg px-2 py-1 focus:outline-none dark:bg-slate-800 dark:text-white"
+                      autoFocus
+                    />
+                    <span className="text-green-500 font-black text-lg">%</span>
+                    <button
+                      onClick={async () => {
+                        try {
+                          await setDoc(
+                            doc(db, "config", "platform"),
+                            { commissionRate: tempCommission },
+                            { merge: true },
+                          );
+                          setCommissionRate(tempCommission);
+                          setEditingCommission(false);
+                        } catch (err) {
+                          console.error("Error saving commission:", err);
+                        }
+                      }}
+                      className="text-xs bg-green-500 text-white px-3 py-1.5 rounded-lg font-bold"
+                    >
+                      Guardar
+                    </button>
+                    <button
+                      onClick={() => setEditingCommission(false)}
+                      className="text-xs text-slate-400 hover:text-slate-600"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    className="flex items-center gap-2 cursor-pointer group"
+                    onClick={() => {
+                      setTempCommission(commissionRate);
+                      setEditingCommission(true);
+                    }}
+                  >
+                    <p className="text-xl font-black text-green-500">
+                      {commissionRate}%
+                    </p>
+                    <span className="material-symbols-outlined text-slate-400 group-hover:text-green-500 transition-colors text-sm">
+                      edit
+                    </span>
+                  </div>
+                )}
               </div>
+
+              <CommissionDashboard
+                completedRequests={completedRequests.map((r) => ({
+                  ...r,
+                  repId: r.repId || "",
+                  budget: r.budget || 0,
+                  completedAt: r.completedAt
+                    ? { toDate: () => (r.completedAt as Timestamp).toDate() }
+                    : null,
+                }))}
+                disputedRequests={disputes.map((r) => ({
+                  ...r,
+                  repId: r.repId || "",
+                  budget: r.budget || 0,
+                  completedAt: null,
+                }))}
+                commissionRecords={commissionRecords.map((c) => ({
+                  ...c,
+                  paidAt: c.paidAt
+                    ? { toDate: () => (c.paidAt as Timestamp).toDate() }
+                    : null,
+                }))}
+                commissionRate={commissionRate}
+                onReleasePayment={handleReleasePayment}
+                onDownloadCSV={() => {
+                  const csvData = completedRequests.map((r) => ({
+                    Representante: r.repName,
+                    Cliente: r.clientName,
+                    Tramite: r.title,
+                    Presupuesto: r.budget || 0,
+                    Comision: (
+                      ((r.budget || 0) * commissionRate) /
+                      100
+                    ).toFixed(2),
+                    Estado: r.status,
+                  }));
+                  downloadCSV(
+                    csvData as unknown as Record<string, unknown>[],
+                    `comisiones_${new Date().toLocaleDateString("es-AR").replace(/\//g, "-")}.csv`,
+                  );
+                }}
+              />
             </div>
           )}
 
