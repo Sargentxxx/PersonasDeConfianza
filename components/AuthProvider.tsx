@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useRef } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import { useRouter, usePathname } from "next/navigation";
@@ -60,55 +60,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => unsubscribe();
   }, []);
 
-  // Ref to access the latest state inside the timeout callback
-  const authState = useRef({ user, userData, loading });
+  const protectedPrefixes = ["/dashboard", "/admin", "/messages", "/settings"];
+
+  const isProtected = protectedPrefixes.some(
+    (prefix) =>
+      pathname.startsWith(prefix) ||
+      pathname.startsWith("/PersonasDeConfianza" + prefix),
+  );
 
   useEffect(() => {
-    authState.current = { user, userData, loading };
-  }, [user, userData, loading]);
-
-  useEffect(() => {
-    // If still loading initially, do nothing
     if (loading) return;
 
-    // Check if current path is protected
-    const protectedPrefixes = [
-      "/dashboard",
-      "/admin",
-      "/messages",
-      "/settings",
-    ];
-
-    const isProtected = protectedPrefixes.some(
-      (prefix) =>
-        pathname.startsWith(prefix) ||
-        pathname.startsWith("/PersonasDeConfianza" + prefix),
-    );
-
     if (isProtected && !user) {
-      console.log("Acceso protegido sin sesión, iniciando verificación...");
-
-      const timer = setTimeout(() => {
-        // CRITICAL CHECK: Use the REF to check the *current* state after the delay
-        const currentAuth = authState.current;
-
-        if (!currentAuth.loading && !currentAuth.user) {
-          console.log("Sesión no recuperada tras espera. Redirigiendo a /auth");
-          router.push("/auth");
-        } else {
-          console.log(
-            "Sesión recuperada justo a tiempo. Cancelando redirección.",
-          );
-        }
-      }, 2000);
-
-      return () => clearTimeout(timer);
+      console.log("Redirigiendo a log-in, acceso protegido sin sesion.");
+      router.push("/auth");
     }
-  }, [user, loading, pathname, router]);
+  }, [user, loading, pathname, router, isProtected]);
 
   // ROLE-BASED ACCESS CONTROL
   useEffect(() => {
-    // Wait until we have user data
     if (loading || !user || !userData) return;
 
     const userRole = userData.role || "client";
@@ -116,45 +86,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       ? pathname.substring("/PersonasDeConfianza".length)
       : pathname;
 
-    // Define shared routes accessible by all authenticated users
     const sharedRoutes = ["/dashboard/chat", "/messages", "/settings"];
-
-    // Check if current route is a shared route
     const isSharedRoute = sharedRoutes.some((route) =>
       normalizedPath.startsWith(route),
     );
 
-    // Define role-specific allowed routes
     const roleRoutes: Record<string, string[]> = {
       admin: ["/admin"],
       rep: ["/dashboard/rep"],
       client: ["/dashboard/client"],
     };
 
-    // Get allowed paths for current user's role
     const allowedPaths = roleRoutes[userRole] || roleRoutes.client;
-
-    // Check if current path starts with any allowed path
     const isAllowedPath =
       userRole === "admin" ||
       allowedPaths.some((path) => normalizedPath.startsWith(path));
 
-    // If trying to access a dashboard route
     const isDashboardRoute =
       normalizedPath.startsWith("/dashboard/") ||
       normalizedPath.startsWith("/admin");
 
-    // If user is on a dashboard route but not their own, redirect
-    // BUT allow shared routes for all users
     if (isDashboardRoute && !isAllowedPath && !isSharedRoute) {
-      console.log(
-        `AuthProvider: ⚠️ Redirección Forzada.`,
-        `\n  - Rol Actual: "${userRole}"`,
-        `\n  - Ruta Intentada: "${normalizedPath}"`,
-        `\n  - Rutas Permitidas: ${JSON.stringify(allowedPaths)}`,
-      );
-
-      // Redirect to correct dashboard based on role
+       // Redirect to correct dashboard based on role
       if (userRole === "admin") {
         router.push("/admin");
       } else if (userRole === "rep") {
@@ -164,6 +117,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
   }, [user, userData, loading, pathname, router]);
+
+  // Block rendering of children if we are evaluating a protected route
+  // to avoid flashes of restricted content
+  if (isProtected && (loading || (!user && !loading))) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+          <p className="text-slate-500 font-medium">Verificando sesión...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <AuthContext.Provider value={{ user, userData, loading }}>

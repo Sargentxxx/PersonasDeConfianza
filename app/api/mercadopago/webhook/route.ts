@@ -64,6 +64,13 @@ export async function POST(request: NextRequest) {
                 paymentUpdatedAt: FieldValue.serverTimestamp(),
             };
 
+            // [SEGURIDAD] - Validación crítica de firmas contra la Base de Datos
+            const expectedAmount = requestDoc.data()?.budget;
+            if (expectedAmount && Number(paymentData.transaction_amount) < Number(expectedAmount)) {
+                 console.error(`Alerta Fraude: El monto pagado en Mercado Pago ($${paymentData.transaction_amount}) es inferior al presupuesto original de la request ($${expectedAmount}).`);
+                 return NextResponse.json({ error: "Amount mismatch / Security Alert" }, { status: 400 });
+            }
+
             // Mapear estados de Mercado Pago a estados de nuestra app
             switch (paymentData.status) {
                 case "approved":

@@ -1,0 +1,55 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Funciones Helper de Seguridad
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function isUser(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+    function getRole() {
+      // Obtenemos el rol asegurando que el request provenga de un usuario autenticado
+      return isAuthenticated() ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role : null;
+    }
+    function isAdmin() {
+      return getRole() == 'admin';
+    }
+
+    // --- REGLAS POR COLECCIÓN ---
+
+    match /users/{userId} {
+      // Cualquier usuario puede ver perfiles públicos, pero solo el dueño (o Admin) puede modificar.
+      allow read: if isAuthenticated();
+      allow write: if isUser(userId) || isAdmin();
+    }
+
+    match /requests/{requestId} {
+      // Los representantes y clientes deben poder leer trabajos disponibles
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      // Las actualizaciones son permitidas para autenticados (Ej. postularse a una request)
+      allow update: if isAuthenticated();
+      allow delete: if isAdmin();
+    }
+
+    match /config/{docId} {
+      // Configuraciones globales como tasas de comisión
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /commissions/{docId} {
+      // Reps pueden leer su propio saldo, pero por ahora permitimos lectura autenticada
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Prevención por defecto para cualquier otra colección no mapeada explícitamente
+    match /{document=**} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

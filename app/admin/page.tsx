@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import MobileHeader from "@/components/MobileHeader";
@@ -418,12 +420,12 @@ export default function AdminDashboard() {
         link: "/settings",
       });
 
-      alert(
+      toast.success(
         `Usuario ${status === "verified" ? "verificado" : "rechazado"} correctamente`,
       );
     } catch (err) {
       console.error(err);
-      alert("Error al actualizar estado del usuario");
+      toast.error("Error al actualizar estado del usuario");
     }
   };
 
@@ -571,8 +573,9 @@ export default function AdminDashboard() {
             <NotificationBell />
           </header>
 
+          <AnimatePresence mode="wait">
           {activeTab === "validation" && (
-            <div className="animate-fade-in">
+            <motion.div key={activeTab} initial={{ opacity: 0, y: 15, filter: "blur(5px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} exit={{ opacity: 0, y: -15, filter: "blur(5px)" }} transition={{ duration: 0.3 }} className="space-y-[var(--space-md)]">
               <div className="grid grid-cols-1 gap-[var(--space-md)]">
                 {loading ? (
                   <div className="text-center py-20">
@@ -729,7 +732,7 @@ export default function AdminDashboard() {
           )}
 
           {activeTab === "disputes" && (
-            <div className="animate-fade-in">
+            <motion.div key={activeTab} initial={{ opacity: 0, y: 15, filter: "blur(5px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} exit={{ opacity: 0, y: -15, filter: "blur(5px)" }} transition={{ duration: 0.3 }} className="space-y-[var(--space-md)]">
               {disputesLoading ? (
                 <div className="text-center py-20">
                   <div className="animate-spin w-10 h-10 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
@@ -775,7 +778,7 @@ export default function AdminDashboard() {
           )}
 
           {activeTab === "commissions" && (
-            <div className="animate-fade-in">
+            <motion.div key={activeTab} initial={{ opacity: 0, y: 15, filter: "blur(5px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} exit={{ opacity: 0, y: -15, filter: "blur(5px)" }} transition={{ duration: 0.3 }} className="space-y-[var(--space-md)]">
               {/* Commission rate editor */}
               <div className="flex items-center gap-4 mb-6 p-4 bg-white dark:bg-[#1a2632] rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
                 <span className="material-symbols-outlined text-green-500">
@@ -977,7 +980,7 @@ export default function AdminDashboard() {
           )}
 
           {activeTab === "users" && (
-            <div className="animate-fade-in">
+            <motion.div key={activeTab} initial={{ opacity: 0, y: 15, filter: "blur(5px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} exit={{ opacity: 0, y: -15, filter: "blur(5px)" }} transition={{ duration: 0.3 }} className="space-y-[var(--space-md)]">
               <div className="bg-white dark:bg-[#1a2632] rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
                 {usersLoading ? (
                   <div className="text-center py-20">
