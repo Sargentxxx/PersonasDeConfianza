@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/components/AuthProvider";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "Personas de Confianza",
@@ -38,7 +39,10 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased bg-background text-foreground font-sans">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {children}
+          <Toaster richColors position="top-center" />
+        </AuthProvider>
       </body>
     </html>
   );
