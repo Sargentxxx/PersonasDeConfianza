@@ -1,8 +1,12 @@
 import { MercadoPagoConfig, Preference } from "mercadopago";
 
 async function testMercadoPago() {
-    // Usando las credenciales proporcionadas por el usuario
-    const accessToken = "***REMOVED***";
+    // Requiere la variable de entorno MP_ACCESS_TOKEN. Nunca hardcodear credenciales.
+    const accessToken = process.env.MP_ACCESS_TOKEN;
+
+    if (!accessToken) {
+        throw new Error("Falta MP_ACCESS_TOKEN. Definila antes de ejecutar este script.");
+    }
     console.log("Iniciando prueba con credenciales de producción...");
 
     const client = new MercadoPagoConfig({

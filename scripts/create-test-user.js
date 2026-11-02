@@ -1,4 +1,11 @@
-const ACCESS_TOKEN = '***REMOVED***';
+// Requiere la variable de entorno MP_ACCESS_TOKEN. Nunca hardcodear credenciales.
+const ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN;
+
+if (!ACCESS_TOKEN) {
+    console.error("Falta MP_ACCESS_TOKEN. Definila antes de ejecutar este script:");
+    console.error('  PowerShell:  $env:MP_ACCESS_TOKEN = "<access_token_de_mercadopago>"');
+    process.exit(1);
+}
 
 async function createTestUser() {
     console.log("Creando usuario de prueba en Mercado Pago...");
